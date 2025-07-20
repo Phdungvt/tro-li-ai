@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trợ lý tạo đề kiểm tra- AG AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --accent-color: #ea4335;
+            --warning-color: #fbbc05;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 3rem 0;
+        }
+        .header h1 {
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+            border: none;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 12px 25px;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+        .btn-success {
+            background-color: var(--secondary-color);
+             border: none;
+            padding: 12px 25px;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+        .btn-outline-secondary, .btn-outline-danger, .btn-outline-primary {
+            border-radius: 8px;
+        }
+        .exam-result {
+            background-color: white;
+            border-left: 4px solid var(--primary-color);
+            padding: 30px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 10px 15px;
+        }
+        .alert {
+            border-radius: 8px;
+        }
+        .tab-content pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            background-color: #fefefe;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        #objectivesSelect {
+            height: 150px;
+        }
+        .structure-item {
+            border-left: 3px solid var(--primary-color);
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        .structure-item p { margin-bottom: 0.25rem; }
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+            color: var(--primary-color);
+            border-color: #dee2e6 #dee2e6 var(--primary-color);
+            border-bottom-width: 3px;
+        }
+        /* Styles for rendered tables */
+        .rendered-table table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .rendered-table th, .rendered-table td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .rendered-table th {
+            background-color: #f2f2f2;
+        }
+        .rendered-table .text-left {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="header py-4 mb-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1><i class="bi bi-journal-bookmark-fill"></i> Trợ lý tạo đề thi AI</h1>
+                    <p class="lead">Tạo đề kiểm tra, đáp án, ma trận và bảng đặc tả theo lựa chọn của giáo viên.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <img src="https://placehold.co/100x100/ffffff/4285f4?text=ThanhVan-AI" alt="AG AI Logo" class="img-fluid rounded-circle" style="max-height: 80px;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div id="messageBox" class="mb-3"></div>
+
+                <!-- Card for adding exam parts -->
+                <div class="card p-4 mb-4">
+                    <h3 class="mb-4"><i class="bi bi-plus-circle-dotted"></i> Thêm phần vào đề thi</h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="gradeSelect" class="form-label">Chọn Lớp học</label>
+                            <select class="form-select" id="gradeSelect">
+                                <option selected disabled>-- Chọn lớp --</option>
+                                <option value="6">Lịch sử Lớp 6</option>
+                                <option value="7">Lịch sử Lớp 7</option>
+                                <option value="8">Lịch sử Lớp 8</option>
+                                <option value="9">Lịch sử Lớp 9</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="lessonSelect" class="form-label">Chọn Bài học</label>
+                            <select class="form-select" id="lessonSelect" disabled>
+                                <option selected disabled>-- Chọn lớp trước --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12" id="objectivesContainer" style="display: none;">
+                            <label for="objectivesSelect" class="form-label">Chọn Yêu cầu cần đạt</label>
+                            <select class="form-select" id="objectivesSelect" multiple>
+                            </select>
+                             <small class="form-text text-muted">Giữ Ctrl (hoặc Command) để chọn nhiều mục.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="questionNum" class="form-label">Số câu hỏi</label>
+                            <input type="number" class="form-control" id="questionNum" min="1" max="50" value="4">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="difficultySelect" class="form-label">Mức độ</label>
+                            <select class="form-select" id="difficultySelect">
+                                <option value="nhận biết">Nhận biết</option>
+                                <option value="thông hiểu" selected>Thông hiểu</option>
+                                <option value="vận dụng">Vận dụng</option>
+                                <option value="vận dụng cao">Vận dụng cao</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="typeSelect" class="form-label">Loại câu hỏi</label>
+                            <select class="form-select" id="typeSelect">
+                                <option value="trắc nghiệm">Trắc nghiệm</option>
+                                <option value="đúng/sai">Đúng/Sai (dựa trên tư liệu)</option>
+                                <option value="tự luận">Tự luận</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 mt-4">
+                        <button id="addBtn" class="btn btn-primary">
+                            <i class="bi bi-plus-lg"></i> Thêm vào đề thi
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card for knowledge sources -->
+                <div class="card p-4 mb-4">
+                    <h3 class="mb-4"><i class="bi bi-book"></i> Nguồn kiến thức</h3>
+                     <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="useTextbook" checked>
+                        <label class="form-check-label" for="useTextbook">Sử dụng dữ liệu Sách giáo khoa Lịch sử (Chân trời sáng tạo)</label>
+                    </div>
+                    <div>
+                        <label for="webLinks" class="form-label">Nguồn kiến thức bổ sung (URL)</label>
+                        <textarea class="form-control" id="webLinks" rows="3" placeholder="Dán các link web vào đây, mỗi link một dòng..."></textarea>
+                        <small class="form-text text-muted">AI sẽ tham khảo các link này để làm phong phú thêm câu hỏi.</small>
+                    </div>
+                </div>
+
+                <!-- Card for exam structure -->
+                <div class="card p-4" id="structureContainer" style="display: none;">
+                     <h3 class="mb-4"><i class="bi bi-diagram-3"></i> Cấu trúc đề thi (Ma trận)</h3>
+                     <div id="structureList"></div>
+                     <div class="d-grid gap-2 mt-4">
+                        <button id="generateFinalExamBtn" class="btn btn-success">
+                            <span id="generateText">Tạo đề thi, Ma trận & Đặc tả</span>
+                            <span id="generateSpinner" class="loading-spinner ms-2">
+                                <i class="bi bi-arrow-repeat text-white"></i>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Result section -->
+    <div class="container mb-5" id="resultSection" style="display: none;">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card p-4 exam-result">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3><i class="bi bi-file-earmark-text"></i> Kết quả</h3>
+                        <div>
+                            <button id="copyBtn" class="btn btn-sm btn-outline-secondary"><i class="bi bi-clipboard"></i> Sao chép</button>
+                            <button id="exportWordBtn" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-word"></i> Xuất ra Word</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabs Navigation -->
+                    <ul class="nav nav-tabs" id="resultTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="exam-tab" data-bs-toggle="tab" data-bs-target="#exam-tab-pane" type="button" role="tab" aria-controls="exam-tab-pane" aria-selected="true">Đề thi & Đáp án</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="matrix-tab" data-bs-toggle="tab" data-bs-target="#matrix-tab-pane" type="button" role="tab" aria-controls="matrix-tab-pane" aria-selected="false">Ma trận đề thi</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="spec-tab" data-bs-toggle="tab" data-bs-target="#spec-tab-pane" type="button" role="tab" aria-controls="spec-tab-pane" aria-selected="false">Bản đặc tả</button>
+                        </li>
+                    </ul>
+
+                    <!-- Tabs Content -->
+                    <div class="tab-content pt-3" id="resultTabsContent">
+                        <div class="tab-pane fade show active" id="exam-tab-pane" role="tabpanel" aria-labelledby="exam-tab" tabindex="0">
+                            <pre id="examContent">Nội dung đề thi và đáp án sẽ xuất hiện ở đây...</pre>
+                        </div>
+                        <div class="tab-pane fade" id="matrix-tab-pane" role="tabpanel" aria-labelledby="matrix-tab" tabindex="0">
+                            <div id="examMatrixContent" class="rendered-table"></div>
+                        </div>
+                        <div class="tab-pane fade" id="spec-tab-pane" role="tabpanel" aria-labelledby="spec-tab" tabindex="0">
+                             <div id="examSpecContent" class="rendered-table"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-end">
+                        <button id="newExamBtn" class="btn btn-outline-secondary"><i class="bi bi-plus-circle"></i> Tạo đề mới</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="text-muted mb-0">Ứng dụng tạo đề kiểm tra ThanhVan-AI &copy; 2025</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- CƠ SỞ DỮ LIỆU BÀI HỌC ---
+        const examData = {
+            "6": {
+                "Bài 1. Lịch sử là gì?": {
+                    chapter: "Chương I. Tại sao cần học lịch sử",
+                    content: `Lịch sử là những gì đã xảy ra trong quá khứ. Môn Lịch sử là khoa học tìm hiểu về hoạt động của con người trong quá khứ. Học lịch sử giúp biết cội nguồn dân tộc, đúc kết kinh nghiệm cho hiện tại và tương lai. Để tìm hiểu lịch sử, cần trả lời các câu hỏi: Xảy ra khi nào? Ở đâu? Xảy ra như thế nào? Vì sao? Ai liên quan? Có ý nghĩa gì? Nguồn sử liệu để dựng lại lịch sử gồm: 1. Tư liệu truyền miệng (truyền thuyết, ca dao) - hình thành khi chưa có chữ viết. 2. Tư liệu hiện vật (di tích, đồ vật cổ) - bằng chứng vật chất, giúp kiểm chứng tư liệu chữ viết. 3. Tư liệu chữ viết (sách, bia ký) - ghi chép tương đối đầy đủ. Trong đó, tư liệu gốc (liên quan trực tiếp, ra đời cùng thời điểm sự kiện) là đáng tin cậy nhất.`,
+                    objectives: [
+                        "Nêu được khái niệm lịch sử và môn Lịch sử.",
+                        "Hiểu được lịch sử là những gì đã diễn ra trong quá khứ.",
+                        "Giải thích được vì sao cần thiết phải học lịch sử.",
+                        "Phân biệt được các nguồn sử liệu cơ bản, ý nghĩa và giá trị của chúng."
+                    ]
+                },
+                "Bài 2. Thời gian trong lịch sử": {
+                    chapter: "Chương I. Tại sao cần học lịch sử",
+                    content: `Người xưa dựa vào quy luật di chuyển của Mặt Trăng, Trái Đất, Mặt Trời để làm ra lịch. Âm lịch tính theo chu kì Mặt Trăng quay quanh Trái Đất (một tháng). Dương lịch tính theo chu kì Trái Đất quay quanh Mặt Trời (một năm). Công lịch (dương lịch) là lịch chính thức của thế giới, lấy năm 1 (năm Chúa Giê-su ra đời) làm năm đầu Công nguyên. Trước đó là Trước Công nguyên (TCN). Một thập kỉ là 10 năm, thế kỉ là 100 năm, thiên niên kỉ là 1000 năm.`,
+                    objectives: [
+                        "Nêu được các khái niệm: thập kỉ, thế kỉ, thiên niên kỉ, TCN, Công nguyên, âm lịch, dương lịch.",
+                        "Biết cách tính thời gian theo Công lịch.",
+                        "Sắp xếp các sự kiện lịch sử theo trình tự thời gian."
+                    ]
+                },
+                "Bài 3. Nguồn gốc loài người": {
+                    chapter: "Chương II. Thời kì nguyên thuỷ",
+                    content: `Quá trình tiến hóa từ vượn thành người: Khoảng 5-6 triệu năm trước, một loài Vượn người xuất hiện. Trải qua quá trình tiến hóa, khoảng 4 triệu năm trước, Người tối cổ ra đời, có đặc điểm: đi bằng hai chân, thể tích não lớn hơn vượn người, biết ghè đẽo đá làm công cụ lao động thô sơ. Khoảng 150.000 năm trước, Người tinh khôn (còn gọi là Người hiện đại) xuất hiện, với bộ não phát triển và cấu tạo cơ thể cơ bản giống người ngày nay; quá trình tiến hóa hoàn thành. Dấu tích Người tối cổ ở Đông Nam Á: Hóa thạch được tìm thấy trên đảo Gia-va (Indonesia). Tại Việt Nam, dấu tích được tìm thấy ở nhiều nơi như: răng hóa thạch ở hang Thẩm Khuyên, Thẩm Hai (Lạng Sơn); công cụ đá ghè đẽo ở núi Đọ, Quan Yên (Thanh Hoá), An Khê (Gia Lai), Xuân Lộc (Đồng Nai).`,
+                    objectives: [
+                        "Giới thiệu được sơ lược quá trình tiến hoá từ Vượn người thành người.",
+                        "Xác định được những dấu tích của Người tối cổ ở Đông Nam Á.",
+                        "Kể tên được những địa điểm có dấu tích Người tối cổ ở Việt Nam."
+                    ]
+                },
+                "Bài 4. Xã hội nguyên thuỷ": {
+                    chapter: "Chương II. Thời kì nguyên thuỷ",
+                    content: `Xã hội nguyên thuỷ trải qua các giai đoạn: bầy người nguyên thuỷ và công xã thị tộc. Công xã thị tộc gồm các gia đình có quan hệ huyết thống, đứng đầu là tộc trưởng, mọi thứ đều là của chung, làm chung, hưởng chung. Đời sống vật chất: Công cụ lao động phát triển từ đá ghè đẽo thô sơ (rìu tay) đến công cụ đá mài tinh xảo hơn, biết làm cung tên. Phương thức kiếm sống chuyển từ săn bắt, hái lượm sang trồng trọt và chăn nuôi, dẫn đến cuộc sống định cư. Họ đã biết tạo ra lửa. Đời sống tinh thần: có tục chôn cất người chết, biết làm đồ trang sức và có hoạt động nghệ thuật như vẽ trên vách hang, điêu khắc.`,
+                    objectives: [
+                        "Mô tả được sơ lược các giai đoạn tiến triển của xã hội nguyên thuỷ.",
+                        "Trình bày được những nét chính về đời sống vật chất và tinh thần của người nguyên thuỷ.",
+                        "Nhận biết được vai trò của lao động đối với quá trình phát triển của con người và xã hội."
+                    ]
+                },
+                "Bài 5. Sự chuyển biến từ xã hội nguyên thuỷ sang xã hội có giai cấp": {
+                    chapter: "Chương II. Thời kì nguyên thuỷ",
+                    content: `Sự xuất hiện công cụ kim loại: Khoảng thiên niên kỷ IV TCN, con người phát hiện ra đồng đỏ, sau đó là đồng thau và sắt. Công cụ kim loại giúp tăng năng suất lao động, khai phá đất hoang, xẻ gỗ, đóng thuyền. Sự chuyển biến xã hội: Nhờ công cụ kim loại, sản phẩm làm ra dư thừa, dẫn đến sự xuất hiện của tư hữu. Một số người chiếm hữu của cải dư thừa trở nên giàu có, hình thành giai cấp thống trị (người giàu). Đa số thành viên còn lại trở thành người nghèo, giai cấp bị trị. Quan hệ bình đẳng bị phá vỡ, xã hội nguyên thuỷ tan rã, nhường chỗ cho xã hội có giai cấp. Ở Việt Nam, quá trình này diễn ra trong các văn hóa Phùng Nguyên, Đồng Đậu, Gò Mun, với sự phát triển của thuật luyện kim và nông nghiệp lúa nước.`,
+                    objectives: [
+                        "Trình bày được quá trình phát hiện ra kim loại và vai trò của nó.",
+                        "Mô tả được sự hình thành xã hội có giai cấp và sự tan rã của xã hội nguyên thuỷ.",
+                        "Nêu được một số nét cơ bản của xã hội nguyên thuỷ Việt Nam trong quá trình tan rã."
+                    ]
+                },
+                "Bài 6. Ai Cập cổ đại": {
+                    chapter: "Chương III. Xã hội cổ đại",
+                    content: `Điều kiện tự nhiên: Nằm ở Đông Bắc châu Phi, dọc theo sông Nin. Sông Nin bồi đắp phù sa, tạo điều kiện cho nông nghiệp phát triển và là đường giao thông quan trọng. Quá trình thành lập nhà nước: Khoảng 3000 TCN, vua Na-mơ thống nhất Thượng và Hạ Ai Cập, lập ra nhà nước do Pha-ra-ông đứng đầu. Thành tựu văn hóa: Sáng tạo ra chữ tượng hình, viết trên giấy pa-pi-rút. Giỏi về Hình học do nhu cầu đo đạc lại ruộng đất. Xây dựng các công trình kiến trúc đồ sộ như Kim tự tháp (lăng mộ Pha-ra-ông), đền thờ. Có kỹ thuật ướp xác phát triển, qua đó có nhiều hiểu biết về y học và giải phẫu.`,
+                    objectives: [
+                        "Nêu được tác động của điều kiện tự nhiên đến sự hình thành văn minh Ai Cập.",
+                        "Trình bày được quá trình thành lập nhà nước Ai Cập cổ đại.",
+                        "Nêu được những thành tựu văn hoá tiêu biểu của Ai Cập cổ đại."
+                    ]
+                },
+                "Bài 7. Lưỡng Hà cổ đại": {
+                    chapter: "Chương III. Xã hội cổ đại",
+                    content: `Điều kiện tự nhiên: Là vùng đồng bằng giữa hai con sông Ti-gơ-rơ và Ơ-phơ-rát, đất đai phì nhiêu. Không có biên giới tự nhiên hiểm trở, thuận lợi cho buôn bán, giao lưu. Quá trình thành lập nhà nước: Khoảng 3500 TCN, người Xu-me xây dựng các quốc gia thành thị. Sau đó, nhiều tộc người khác thay nhau làm chủ. Thành tựu văn hóa: Sáng tạo ra chữ hình nêm (chữ hình góc). Ban hành bộ luật thành văn Ha-mu-ra-bi. Giỏi về số học, phát minh hệ đếm cơ số 60 (ứng dụng trong cách chia giờ, phút, giây và vòng tròn 360 độ). Kiến trúc chủ yếu bằng gạch, công trình nổi tiếng là Vườn treo Ba-bi-lon.`,
+                    objectives: [
+                        "Nêu được tác động của điều kiện tự nhiên đến sự hình thành văn minh Lưỡng Hà.",
+                        "Trình bày được quá trình thành lập nhà nước Lưỡng Hà cổ đại.",
+                        "Nêu được những thành tựu văn hoá tiêu biểu của Lưỡng Hà cổ đại."
+                    ]
+                },
+                "Bài 8. Ấn Độ cổ đại": {
+                    chapter: "Chương III. Xã hội cổ đại",
+                    content: `Điều kiện tự nhiên: Nằm ở Nam Á, có đồng bằng sông Ấn và sông Hằng màu mỡ, thuận lợi cho nông nghiệp. Xã hội: Khoảng 1500 TCN, người A-ri-a xâm nhập và thiết lập chế độ đẳng cấp Vác-na, chia xã hội thành 4 đẳng cấp chính dựa trên chủng tộc và nghề nghiệp: Bra-man (tăng lữ), Ksa-tri-a (vương công, vũ sĩ), Vai-si-a (thương nhân, nông dân), và Su-đra (phục dịch). Thành tựu văn hóa: Là quê hương của Bà La Môn giáo (sau là Hin-đu giáo) và Phật giáo. Sáng tạo ra chữ Phạn. Phát minh ra hệ thống 10 chữ số (từ 0 đến 9) mà ngày nay được sử dụng rộng rãi. Kiến trúc tôn giáo phát triển với các công trình như chùa hang A-gian-ta, đại bảo tháp San-chi.`,
+                    objectives: [
+                        "Nêu được ảnh hưởng của điều kiện tự nhiên đến văn minh Ấn Độ.",
+                        "Trình bày được những điểm chính về chế độ xã hội đẳng cấp.",
+                        "Nêu được những thành tựu văn hoá tiêu biểu của Ấn Độ cổ đại."
+                    ]
+                },
+                "Bài 9. Trung Quốc từ thời cổ đại đến thế kỉ VII": {
+                    chapter: "Chương III. Xã hội cổ đại",
+                    content: `Điều kiện tự nhiên: Nền văn minh bắt nguồn từ lưu vực sông Hoàng Hà và Trường Giang, với đồng bằng phù sa màu mỡ. Quá trình thống nhất: Cuối thời nhà Chu, nước Tần mạnh lên. Năm 221 TCN, Tần Doanh Chính (Tần Thủy Hoàng) thống nhất Trung Quốc, lập ra nhà Tần, xác lập chế độ phong kiến. Ông thực hiện nhiều chính sách thống nhất về lãnh thổ, đo lường, tiền tệ, chữ viết. Sau nhà Tần là nhà Hán, rồi đến thời kỳ chia rẽ Nam-Bắc triều và nhà Tùy tái thống nhất. Thành tựu văn hóa: Sáng tạo chữ tượng hình (tiền thân chữ Hán). Có nhiều trường phái tư tưởng, nổi bật là Nho gia của Khổng Tử. Có nhiều phát minh kỹ thuật quan trọng như kỹ thuật làm giấy, dệt tơ lụa, địa động nghi (máy đo động đất). Công trình kiến trúc vĩ đại là Vạn Lý Trường Thành.`,
+                    objectives: [
+                        "Trình bày được đặc điểm điều kiện tự nhiên của Trung Quốc cổ đại.",
+                        "Mô tả được quá trình thống nhất và xác lập chế độ phong kiến thời Tần Thủy Hoàng.",
+                        "Nêu được những thành tựu văn minh chủ yếu của Trung Quốc trước thế kỉ VII."
+                    ]
+                },
+                "Bài 10. Hy Lạp cổ đại": {
+                    chapter: "Chương III. Xã hội cổ đại",
+                    content: `Điều kiện tự nhiên: Lãnh thổ chủ yếu ở nam bán đảo Ban-căng, gồm nhiều đồi núi, đất đai khô cằn, chỉ thuận lợi trồng nho, ô liu. Bù lại có đường bờ biển dài, nhiều vũng vịnh, hải cảng, thuận lợi cho thương mại đường biển. Tổ chức nhà nước: Gồm nhiều thành bang độc lập, tiêu biểu là nhà nước dân chủ ở A-ten. Ở A-ten, quyền lực cao nhất thuộc về Đại hội nhân dân, gồm các nam công dân từ 18 tuổi trở lên, có quyền bầu cử, bãi miễn quan chức. Thành tựu văn hóa: Sáng tạo ra hệ thống 24 chữ cái (alphabet). Đặt nền móng cho khoa học phương Tây với nhiều nhà khoa học, triết gia nổi tiếng (Ta-lét, Pi-ta-go, Hê-rô-đốt, Xô-crát...). Kiến trúc và điêu khắc phát triển rực rỡ với các công trình như đền Pác-tê-nông, tượng thần Dớt, tượng Vệ nữ thành Mi-lô.`,
+                    objectives: [
+                        "Nêu được tác động của điều kiện tự nhiên đến sự phát triển của Hy Lạp.",
+                        "Trình bày được tổ chức nhà nước thành bang ở Hy Lạp (tiêu biểu là A-ten).",
+                        "Nêu được những thành tựu văn hoá tiêu biểu của Hy Lạp cổ đại."
+                    ]
+                },
+                "Bài 11. La Mã cổ đại": {
+                    chapter: "Chương III. Xã hội cổ đại",
+                    content: `Điều kiện tự nhiên: Bắt nguồn từ bán đảo I-ta-li-a, có đồng bằng màu mỡ, nhiều khoáng sản, và vị trí trung tâm Địa Trung Hải thuận lợi cho giao thương, quân sự. Tổ chức nhà nước: Ban đầu là nhà nước Cộng hòa, quyền lực nằm trong tay Viện Nguyên lão (300 thành viên). Từ năm 27 TCN, chuyển sang hình thức Đế chế, hoàng đế thâu tóm mọi quyền lực. Thành tựu văn hóa: Sáng tạo hệ thống chữ La-tinh (dùng đến ngày nay). Hệ thống chữ số La Mã (I, V, X...). Xây dựng hệ thống luật pháp chặt chẽ, là nền tảng cho luật pháp phương Tây sau này. Phát minh ra bê tông, xây dựng các công trình đồ sộ như đấu trường Cô-li-dê, Khải hoàn môn, hệ thống cầu cống, đường sá.`,
+                    objectives: [
+                        "Nêu được tác động của điều kiện tự nhiên đến sự phát triển của La Mã.",
+                        "Trình bày được tổ chức nhà nước đế chế ở La Mã.",
+                        "Nêu được những thành tựu văn hoá tiêu biểu của La Mã cổ đại."
+                    ]
+                },
+                "Bài 12. Các vương quốc ở Đông Nam Á trước thế kỉ X": {
+                    chapter: "Chương IV. Đông Nam Á từ những thế kỉ tiếp giáp công nguyên đến thế kỉ X",
+                    content: `Vị trí địa lí: Nằm ở Đông Nam châu Á, là cầu nối giữa Ấn Độ Dương và Thái Bình Dương, giữa lục địa Á-Âu và châu Đại Dương. Khí hậu nhiệt đới gió mùa. Sự xuất hiện các vương quốc cổ (đầu CN - thế kỷ VII): Một số vương quốc ra đời như Chăm-pa, Phù Nam (mạnh nhất, có cảng Óc Eo), Pê-gu... Sự hình thành các vương quốc phong kiến (thế kỷ VII - X): Sau khi Phù Nam sụp đổ, nhiều quốc gia mới ra đời như Đva-ra-va-ti, Ha-ri-pun-giay-a (lưu vực sông Mê Nam), Pa-gan (người Miến), Sri Vi-giay-a (đảo Xu-ma-tra), Ka-lin-ga (đảo Gia-va). Đầu thế kỷ X, người Việt giành độc lập, xây dựng nhà nước tự chủ.`,
+                    objectives: [
+                        "Trình bày được vị trí địa lí của khu vực Đông Nam Á.",
+                        "Trình bày được quá trình xuất hiện của các vương quốc cổ trước thế kỉ VII.",
+                        "Nêu được sự hình thành và phát triển ban đầu của các vương quốc phong kiến từ thế kỉ VII đến thế kỉ X."
+                    ]
+                },
+                "Bài 13. Giao lưu thương mại và văn hoá ở Đông Nam Á": {
+                    chapter: "Chương IV. Đông Nam Á từ những thế kỉ tiếp giáp công nguyên đến thế kỉ X",
+                    content: `Giao lưu thương mại: Do vị trí chiến lược, Đông Nam Á trở thành điểm trung chuyển và cung cấp sản vật (hồ tiêu, trầm hương...) trên tuyến đường biển giữa Trung Quốc, Ấn Độ và Địa Trung Hải. Nhiều cảng thị sầm uất ra đời như Óc Eo, Trà Kiệu, Pa-lem-bang. Giao lưu thương mại thúc đẩy sự ra đời và phát triển của các vương quốc cổ. Giao lưu văn hóa: Cùng với thương mại, văn hóa Ấn Độ và Trung Quốc du nhập vào khu vực. Văn hóa Ấn Độ ảnh hưởng sâu sắc hơn qua tôn giáo (Hin-đu giáo, Phật giáo) và chữ viết (chữ Phạn). Cư dân Đông Nam Á đã tiếp thu có chọn lọc, cải biến chữ Phạn thành chữ viết riêng (Chăm cổ, Khơ-me cổ...). Nghệ thuật kiến trúc độc đáo hình thành, tiêu biểu là đền tháp Mỹ Sơn, Bô-rô-bu-đua.`,
+                    objectives: [
+                        "Phân tích được những tác động chính của quá trình giao lưu thương mại và văn hoá ở Đông Nam Á trong 10 thế kỉ đầu Công nguyên."
+                    ]
+                },
+                "Bài 14. Nhà nước Văn Lang, Âu Lạc": {
+                    chapter: "Chương V. Việt Nam từ khoảng thế kỉ VII TCN đến đầu thế kỉ X",
+                    content: `Nhà nước Văn Lang: Ra đời vào khoảng thế kỷ VII TCN, do thủ lĩnh bộ lạc Văn Lang thu phục các bộ lạc khác. Người đứng đầu tự xưng là Hùng Vương, đóng đô ở Phong Châu (Việt Trì, Phú Thọ). Tổ chức nhà nước còn sơ khai: đứng đầu là Hùng Vương, giúp việc có Lạc hầu, Lạc tướng. Cả nước chia làm 15 bộ, do Lạc tướng đứng đầu. Dưới bộ là chiềng, chạ do Bồ chính cai quản. Chưa có luật pháp, quân đội. Nhà nước Âu Lạc: Năm 214 TCN, quân Tần xâm lược. Người Lạc Việt và Âu Việt do Thục Phán lãnh đạo đã kháng chiến thắng lợi. Sau đó, Thục Phán xưng là An Dương Vương, hợp nhất hai bộ tộc, lập ra nước Âu Lạc vào năm 208 TCN, dời đô về Phong Khê (Cổ Loa, Hà Nội). Tổ chức nhà nước chặt chẽ hơn, vua có quyền lực cao hơn, có quân đội mạnh, vũ khí tốt (nỏ), và thành Cổ Loa kiên cố. Năm 179 TCN, Âu Lạc bị Triệu Đà (nước Nam Việt) thôn tính.`,
+                    objectives: [
+                        "Nêu được thời gian và không gian của nước Văn Lang, Âu Lạc.",
+                        "Trình bày được tổ chức nhà nước Văn Lang, Âu Lạc.",
+                        "Liên hệ được các phong tục hiện nay kế thừa từ thời Văn Lang - Âu Lạc."
+                    ]
+                },
+                "Bài 15. Đời sống của người Việt thời kì Văn Lang, Âu Lạc": {
+                    chapter: "Chương V. Việt Nam từ khoảng thế kỉ VII TCN đến đầu thế kỉ X",
+                    content: `Đời sống vật chất: Nền kinh tế chủ yếu là nông nghiệp trồng lúa nước, sử dụng công cụ bằng đồng (lưỡi cày, rìu...). Ngoài ra còn trồng dâu, chăn nuôi, đánh cá. Các nghề thủ công phát triển như làm gốm, dệt vải, đúc đồng (trống đồng, thạp đồng). Thức ăn chính là cơm nếp, cơm tẻ; có bánh chưng, bánh giầy. Ở nhà sàn, đi lại bằng thuyền. Nam đóng khố, nữ mặc váy. Đời sống tinh thần: Thờ cúng tổ tiên và các vị thần tự nhiên (thần Sông, thần Núi). Người chết được chôn cất cẩn thận (mộ thuyền). Có các phong tục như nhuộm răng đen, ăn trầu, xăm mình. Lễ hội vui chơi, nhảy múa, ca hát, đua thuyền.`,
+                    objectives: [
+                        "Mô tả được đời sống vật chất và tinh thần của cư dân Văn Lang, Âu Lạc."
+                    ]
+                },
+                "Bài 16. Chính sách cai trị của phong kiến phương Bắc và sự chuyển biến của Việt Nam": {
+                    chapter: "Chương V. Việt Nam từ khoảng thế kỉ VII TCN đến đầu thế kỉ X",
+                    content: `Chính sách cai trị: Về chính trị, chia nước ta thành các quận, huyện để sáp nhập vào Trung Quốc; cử quan lại người Hán cai trị đến cấp huyện. Về kinh tế, chiếm đoạt ruộng đất, bắt cống nạp sản vật quý, áp đặt thuế khóa nặng nề, độc quyền về sắt và muối. Về văn hóa, thực hiện chính sách 'đồng hóa', đưa người Hán sang ở lẫn, truyền bá Nho giáo, chữ Hán, bắt dân ta theo phong tục của họ. Sự chuyển biến: Về kinh tế, nông nghiệp có bước phát triển (dùng cày, sức kéo trâu bò, đắp đê), xuất hiện một số nghề thủ công mới (làm giấy, thuộc da). Về xã hội, cơ cấu xã hội thay đổi, xuất hiện các tầng lớp: quan lại đô hộ, địa chủ Hán, hào trưởng Việt, nông dân công xã, nông dân lệ thuộc, nô tì. Mâu thuẫn bao trùm là mâu thuẫn dân tộc.`,
+                    objectives: [
+                        "Nêu được một số chính sách cai trị của phong kiến phương Bắc.",
+                        "Nhận biết được một số chuyển biến quan trọng về kinh tế, xã hội, văn hoá ở Việt Nam thời Bắc thuộc."
+                    ]
+                },
+                "Bài 17. Đấu tranh bảo tồn và phát triển văn hoá dân tộc": {
+                    chapter: "Chương V. Việt Nam từ khoảng thế kỉ VII TCN đến đầu thế kỉ X",
+                    content: `Bảo tồn văn hóa: Dù bị ép buộc, người Việt vẫn kiên trì giữ gìn bản sắc văn hóa dân tộc. Tiếng Việt vẫn được duy trì trong giao tiếp hằng ngày. Các tín ngưỡng truyền thống như thờ cúng tổ tiên, thờ thần tự nhiên được bảo tồn. Các phong tục tập quán như ăn trầu, nhuộm răng, làm bánh chưng, bánh giầy vẫn được lưu truyền trong các làng xã. Tiếp thu và phát triển văn hóa: Người Việt chủ động tiếp thu có chọn lọc văn hóa bên ngoài. Phật giáo, Đạo giáo du nhập, hòa quyện với tín ngưỡng dân gian. Tiếp thu chữ Hán nhưng dùng âm Việt để đọc (tạo ra từ Hán-Việt). Học hỏi một số kỹ thuật sản xuất tiến bộ như làm giấy, dệt lụa, bón phân bắc.`,
+                    objectives: [
+                        "Giới thiệu được những nét chính của cuộc đấu tranh bảo tồn và phát triển văn hoá dân tộc thời Bắc thuộc."
+                    ]
+                },
+                "Bài 18. Các cuộc đấu tranh giành độc lập dân tộc trước thế kỉ X": {
+                    chapter: "Chương V. Việt Nam từ khoảng thế kỉ VII TCN đến đầu thế kỉ X",
+                    content: `Do chính sách cai trị tàn bạo, các cuộc khởi nghĩa liên tiếp nổ ra. Tiêu biểu: 1. Khởi nghĩa Hai Bà Trưng (40-43): Lật đổ ách đô hộ nhà Hán, Trưng Trắc lên làm vua, giành độc lập trong 3 năm. 2. Khởi nghĩa Bà Triệu (248): Chống lại ách đô hộ nhà Ngô, làm 'toàn thể Giao Châu chấn động'. 3. Khởi nghĩa Lý Bí (542-602): Đánh đuổi quân Lương, Lý Bí lên ngôi (Lý Nam Đế), lập nước Vạn Xuân, thể hiện ý thức độc lập tự chủ. 4. Khởi nghĩa Mai Thúc Loan (713-722): Chống lại nhà Đường, xưng đế (Mai Hắc Đế), giải phóng đất nước trong gần 10 năm. 5. Khởi nghĩa Phùng Hưng (cuối thế kỷ VIII): Chiếm thành Tống Bình, giành quyền tự chủ, được nhân dân suy tôn là Bố Cái Đại Vương.`,
+                    objectives: [
+                        "Giải thích được nguyên nhân của các cuộc khởi nghĩa.",
+                        "Trình bày được diễn biến, kết quả, ý nghĩa của các cuộc khởi nghĩa tiêu biểu."
+                    ]
+                },
+                "Bài 19. Bước ngoặt lịch sử đầu thế kỉ X": {
+                    chapter: "Chương V. Việt Nam từ khoảng thế kỉ VII TCN đến đầu thế kỉ X",
+                    content: `Giành quyền tự chủ: Cuối thế kỷ IX, nhà Đường suy yếu. Năm 905, Khúc Thừa Dụ, một hào trưởng, đã giành lấy chính quyền, tự xưng Tiết độ sứ, xây dựng chính quyền tự chủ. Con ông là Khúc Hạo tiến hành nhiều cải cách quan trọng. Năm 931, Dương Đình Nghệ đánh tan quân Nam Hán xâm lược lần thứ nhất, củng cố nền tự chủ. Chiến thắng Bạch Đằng (938): Năm 938, quân Nam Hán sang xâm lược lần thứ hai. Ngô Quyền, con rể Dương Đình Nghệ, đã lãnh đạo nhân dân làm nên chiến thắng vang dội trên sông Bạch Đằng bằng cách đóng cọc gỗ dưới lòng sông. Chiến thắng này đã chấm dứt hơn 1000 năm Bắc thuộc, mở ra thời kỳ độc lập, tự chủ lâu dài cho dân tộc.`,
+                    objectives: [
+                        "Trình bày được cuộc đấu tranh giành quyền tự chủ của họ Khúc, họ Dương.",
+                        "Mô tả được trận chiến Bạch Đằng năm 938 và nêu ý nghĩa lịch sử của chiến thắng."
+                    ]
+                },
+                "Bài 20. Vương quốc Chăm-pa": {
+                    chapter: "Chương V. Việt Nam từ khoảng thế kỉ VII TCN đến đầu thế kỉ X",
+                    content: `Lịch sử hình thành: Cuối thế kỷ II, ở quận Nhật Nam, Khu Liên nổi dậy khởi nghĩa, lập ra nước Lâm Ấp, sau đổi tên là Chăm-pa. Lãnh thổ kéo dài từ Quảng Bình đến Bình Thuận ngày nay. Kinh tế-xã hội: Cư dân chủ yếu làm nông nghiệp trồng lúa nước, sử dụng công cụ sắt và sức kéo trâu bò. Họ giỏi nghề đi biển, đánh cá và buôn bán. Xã hội có sự phân chia giàu nghèo. Văn hóa: Tiếp thu văn hóa Ấn Độ, sáng tạo ra chữ Chăm cổ. Tôn giáo chính là Hin-đu giáo và Phật giáo. Nghệ thuật kiến trúc và điêu khắc đặc sắc, tiêu biểu là khu đền tháp Mỹ Sơn và các tượng thờ.`,
+                    objectives: [
+                        "Mô tả được sự thành lập và quá trình phát triển của vương quốc Chăm-pa.",
+                        "Trình bày được những nét chính về kinh tế và tổ chức xã hội của Chăm-pa.",
+                        "Nhận biết được một số thành tựu văn hoá của Chăm-pa."
+                    ]
+                },
+                "Bài 21. Vương quốc cổ Phù Nam": {
+                    chapter: "Chương V. Việt Nam từ khoảng thế kỉ VII TCN đến đầu thế kỉ X",
+                    content: `Lịch sử hình thành: Ra đời vào khoảng thế kỷ I, là một quốc gia hùng mạnh ở Đông Nam Á, phạm vi ảnh hưởng rộng lớn, chủ yếu ở khu vực Nam Bộ Việt Nam ngày nay. Đến thế kỷ VII thì suy yếu và bị Chân Lạp thôn tính. Kinh tế-xã hội: Kinh tế rất phát triển, đặc biệt là ngoại thương đường biển. Có cảng thị Óc Eo (An Giang) là trung tâm giao thương quốc tế lớn. Nông nghiệp và thủ công nghiệp (làm gốm, trang sức) cũng phát triển. Văn hóa: Chịu ảnh hưởng sâu sắc của văn hóa Ấn Độ. Sử dụng chữ Phạn, theo Hin-đu giáo và Phật giáo. Nghệ thuật đặc sắc, để lại nhiều di vật quý giá thuộc văn hóa Óc Eo.`,
+                    objectives: [
+                        "Mô tả được sự thành lập, phát triển và suy vong của vương quốc Phù Nam.",
+                        "Trình bày được những nét chính về tổ chức xã hội và kinh tế của Phù Nam.",
+                        "Nhận biết được một số thành tựu văn hoá của Phù Nam."
+                    ]
+                }
+            },
+            "7": {
+                "Bài 1. Quá trình hình thành và phát triển của chế độ phong kiến ở Tây Âu": {
+                    chapter: "Chương I: Tây Âu từ thế kỉ V đến nửa đầu thế kỉ XVI",
+                    content: "Tìm hiểu quá trình hình thành, phát triển của chế độ phong kiến, các cuộc phát kiến địa lí, sự hình thành quan hệ sản xuất tư bản chủ nghĩa, phong trào Văn hóa Phục hưng và cải cách tôn giáo ở Tây Âu.",
+                    objectives: [
+                        "Trình bày được quá trình hình thành và phát triển của chế độ phong kiến ở Tây Âu.",
+                        "Trình bày được các cuộc phát kiến địa lí và sự hình thành quan hệ sản xuất tư bản chủ nghĩa ở Tây Âu.",
+                        "Trình bày được phong trào văn hóa phục hưng và cải cách tôn giáo."
+                    ]
+                },
+                "Bài 2. Các cuộc phát kiến địa lí": {
+                    chapter: "Chương I: Tây Âu từ thế kỉ V đến nửa đầu thế kỉ XVI",
+                    content: "Giải thích nguyên nhân, mô tả các cuộc phát kiến địa lí tiêu biểu (C. Cô-lôm-bô, Ph. Ma-gien-lăng) và phân tích tác động của chúng đối với lịch sử.",
+                    objectives: [
+                        "Giải thích được nguyên nhân và những yếu tố tác động đến các cuộc đại phát kiến địa lí.",
+                        "Mô tả được các cuộc đại phát kiến địa lí: C. Cô-lôm-bô tìm ra châu Mĩ, cuộc thám hiểm của Ph. Ma-gien-lăng vòng quanh Trái Đất.",
+                        "Phân tích được những tác động của các cuộc đại phát kiến địa lí đối với tiến trình lịch sử."
+                    ]
+                },
+                "Bài 3. Sự hình thành quan hệ sản xuất tư bản chủ nghĩa ở Tây Âu trung đại": {
+                    chapter: "Chương I: Tây Âu từ thế kỉ V đến nửa đầu thế kỉ XVI",
+                    content: "Xác định những biến đổi chính trong xã hội và sự nảy sinh phương thức sản xuất tư bản chủ nghĩa ở Tây Âu.",
+                    objectives: [
+                        "Xác định được những biến đổi chính trong xã hội và sự nảy sinh phương thức sản xuất tư bản chủ nghĩa ở Tây Âu."
+                    ]
+                },
+                "Bài 4. Phong trào Văn hoá Phục hưng": {
+                    chapter: "Chương I: Tây Âu từ thế kỉ V đến nửa đầu thế kỉ XVI",
+                    content: "Giới thiệu bối cảnh kinh tế - xã hội, trình bày các thành tựu tiêu biểu và nhận biết ý nghĩa, tác động của phong trào Văn hóa Phục hưng.",
+                    objectives: [
+                        "Giới thiệu được sự biến đổi quan trọng về kinh tế - xã hội của Tây Âu từ thế kỉ XIII đến thế kỉ XVI.",
+                        "Trình bày được những thành tựu tiêu biểu của phong trào Văn hóa Phục hưng.",
+                        "Nhận biết được ý nghĩa và tác động của phong trào Văn hóa Phục hưng đối với xã hội Tây Âu."
+                    ]
+                },
+                "Bài 5. Phong trào cải cách tôn giáo": {
+                    chapter: "Chương I: Tây Âu từ thế kỉ V đến nửa đầu thế kỉ XVI",
+                    content: "Nêu và giải thích nguyên nhân, mô tả nội dung cơ bản và tác động của các cuộc cải cách tôn giáo đối với xã hội Tây Âu.",
+                    objectives: [
+                        "Nêu và giải thích được nguyên nhân của phong trào cải cách tôn giáo.",
+                        "Mô tả khái quát được nội dung cơ bản của các cuộc cải cách tôn giáo.",
+                        "Nêu được tác động của cải cách tôn giáo đối với xã hội Tây Âu."
+                    ]
+                },
+                "Bài 6. Khái lược tiến trình lịch sử Trung Quốc từ thế kỉ VII đến giữa thế kỉ XIX": {
+                    chapter: "Chương II: Trung Quốc và Ấn Độ thời phong kiến",
+                    content: "Lập sơ đồ tiến trình phát triển của Trung Quốc qua các thời Đường, Tống, Nguyên, Minh, Thanh. Nêu những nét chính về sự thịnh vượng thời Đường và sự phát triển kinh tế thời Minh - Thanh.",
+                    objectives: [
+                        "Lập được Sơ đồ Tiến trình phát triển của Trung Quốc từ thế kỉ VII đến giữa thế kỉ XIX (các thời Đường, Tống, Nguyên, Minh, Thanh).",
+                        "Nêu được những nét chính về sự thịnh vượng của Trung Quốc dưới thời Đường.",
+                        "Mô tả được sự phát triển kinh tế dưới thời Minh - Thanh."
+                    ]
+                },
+                "Bài 7. Các thành tựu văn hóa chủ yếu của Trung Quốc từ thế kỉ VII đến giữa thế kỉ XIX": {
+                    chapter: "Chương II: Trung Quốc và Ấn Độ thời phong kiến",
+                    content: "Giới thiệu và nhận xét những thành tựu chủ yếu của văn hóa Trung Quốc từ thế kỷ VII đến giữa thế kỷ XIX như Nho giáo, sử học, kiến trúc.",
+                    objectives: [
+                        "Giới thiệu được những thành tựu chủ yếu của văn hóa Trung Quốc từ thế kỷ VII đến giữa thế kỷ XIX (Nho giáo, sử học, kiến trúc,…).",
+                        "Nhận xét được những thành tựu chủ yếu của văn hóa Trung Quốc từ thế kỷ VII đến giữa thế kỷ XIX."
+                    ]
+                },
+                "Bài 8. Vương triều Gúp-ta": {
+                    chapter: "Chương II: Trung Quốc và Ấn Độ thời phong kiến",
+                    content: "Trình bày về sự ra đời, tình hình chính trị, kinh tế, xã hội và các thành tựu văn hóa tiêu biểu của Ấn Độ dưới vương triều Gúp-ta.",
+                    objectives: [
+                        "Nêu được những nét chính về điều kiện tự nhiên của Ấn Độ.",
+                        "Trình bày khái quát được sự ra đời về tình hình chính trị, kinh tế, xã hội của Ấn độ dưới vương triều Gúp-ta.",
+                        "Giới thiệu và nhận xét được một số thành tựu tiêu biểu về văn hóa Ấn Độ dưới thời vương triều Gúp-ta."
+                    ]
+                },
+                "Bài 9. Vương triều Hồi giáo Đê-li": {
+                    chapter: "Chương II: Trung Quốc và Ấn Độ thời phong kiến",
+                    content: "Trình bày về sự ra đời, tình hình chính trị, kinh tế, xã hội và các thành tựu văn hóa tiêu biểu của Ấn Độ dưới vương triều Hồi giáo Đê-li.",
+                    objectives: [
+                        "Trình bày khái quát được sự ra đời về tình hình chính trị, kinh tế, xã hội của Ấn độ dưới thời vương triều Hồi giáo Đê -Li.",
+                        "Giới thiệu và nhận xét được một số thành tựu tiêu biểu về văn hóa Ấn Độ dưới thời vương triều Hồi giáo Đê – li."
+                    ]
+                },
+                "Bài 10. Đế quốc Mô-gôn": {
+                    chapter: "Chương II: Trung Quốc và Ấn Độ thời phong kiến",
+                    content: "Trình bày về sự ra đời, tình hình chính trị, kinh tế, xã hội và các thành tựu văn hóa tiêu biểu của Ấn Độ dưới thời đế quốc Mô-gôn.",
+                    objectives: [
+                        "Trình bày khái quát được sự ra đời và tình hình chính trị, kinh tế, xã hội của Ấn Độ dưới thời đế quốc Mô-gôn.",
+                        "Giới thiệu và nhận xét một số thành tựu tiêu biểu của văn hóa Ấn Độ dưới thời đế quốc Mô-gôn."
+                    ]
+                },
+                "Bài 11. Khái quát về Đông Nam Á từ nửa sau thế kỉ X đến nửa đầu thế kỉ XVI": {
+                    chapter: "Chương III: Đông Nam Á từ nửa sau thế kỉ X đến nửa đầu thế kỉ XVI",
+                    content: "Mô tả quá trình hình thành, phát triển và giới thiệu các thành tựu văn hoá tiêu biểu của các quốc gia Đông Nam Á trong giai đoạn này.",
+                    objectives: [
+                        "Mô tả được quá trình hình thành, phát triển của các quốc gia Đông Nam Á từ nửa sau thế kỉ X đến nửa đầu thế kỉ XVI.",
+                        "Giới thiệu và nhận xét được những thành tựu văn hoá tiêu biểu của Đông Nam Á từ nửa sau thế kỉ X đến nửa đầu thế kỉ XVI."
+                    ]
+                },
+                "Bài 12. Vương quốc Cam-pu-chia": {
+                    chapter: "Chương III: Đông Nam Á từ nửa sau thế kỉ X đến nửa đầu thế kỉ XVI",
+                    content: "Mô tả quá trình hình thành, phát triển của Vương quốc Cam-pu-chia, đặc biệt là thời kỳ Ăng-co, và nêu những nét văn hóa tiêu biểu.",
+                    objectives: [
+                        "Mô tả được quá trình hình thành và phát triển của Vương quốc Cam-pu-chia.",
+                        "Nhận biết và đánh giá được sự phát triển của Vương quốc Cam-pu-chia thời Ăng Co.",
+                        "Nêu được một số nét tiêu biểu về văn hoá của Vương quốc Cam-pu-chia."
+                    ]
+                },
+                "Bài 13. Vương quốc Lào": {
+                    chapter: "Chương III: Đông Nam Á từ nửa sau thế kỉ X đến nửa đầu thế kỉ XVI",
+                    content: "Mô tả quá trình hình thành, phát triển của Vương quốc Lào, đặc biệt là thời Lan Xang, và nêu những nét văn hóa tiêu biểu.",
+                    objectives: [
+                        "Mô tả được quá trình hình thành và phát triển của Vương Quốc Lào.",
+                        "Nhận biết và đánh giá được sự phát triển của Vương quốc Lào thời Lan Xang.",
+                        "Nêu được một số nét tiêu biểu về văn hóa của Vương quốc Lào."
+                    ]
+                },
+                "Bài 14. Công cuộc xây dựng và bảo vệ đất nước thời Ngô-Đinh-Tiền Lê (938-1009)": {
+                    chapter: "Chương IV: Đại Việt thời Ngô - Đinh - Tiền Lê (938-1009)",
+                    content: "Trình bày về thời Ngô, quá trình thống nhất của Đinh Bộ Lĩnh, cuộc kháng chiến chống Tống của Lê Hoàn, tổ chức chính quyền và đời sống xã hội, văn hóa thời kỳ này.",
+                    objectives: [
+                        "Nêu được những nét chính về thời Ngô.",
+                        "Trình bày được quá trình thống nhất đất nước của Đinh Bộ Lĩnh và sự thành lập của nhà Đinh.",
+                        "Mô tả được cuộc kháng chiến chống quân xâm lược Tống của Lê Hoàn năm 981.",
+                        "Giới thiệu được những nét chính về tổ chức chính quyền thời Đinh - Tiền Lê.",
+                        "Nhận biết được đời sống xã hội văn hóa thời Ngô – Đinh – Tiền Lê.",
+                        "Đánh giá được công lao của Ngô Quyền, Đinh Bộ Lĩnh, Lê Hoàn."
+                    ]
+                },
+                "Bài 15. Công cuộc xây dựng và bảo vệ đất nước thời Lý (1009-1226)": {
+                    chapter: "Chương V: Đại Việt thời Lý - Trần - Hồ (1009 - 1407)",
+                    content: "Mô tả sự thành lập nhà Lý, những nét chính về chính trị, kinh tế, xã hội, văn hóa và cuộc kháng chiến chống Tống.",
+                    objectives: [
+                        "Trình bày được sự thành lập của nhà Lý.",
+                        "Mô tả được những nét chính về chính trị, kinh tế, xã hội, văn hóa thời Lý.",
+                        "Trình bày được những nét chính về cuộc kháng chiến chống quân Tống xâm lược."
+                    ]
+                },
+                "Bài 16. Công cuộc xây dựng đất nước thời Trần (1226-1400)": {
+                    chapter: "Chương V: Đại Việt thời Lý - Trần - Hồ (1009 - 1407)",
+                    content: "Mô tả sự thành lập nhà Trần và trình bày những nét chính về tình hình chính trị, kinh tế, xã hội, văn hoá, tôn giáo thời Trần.",
+                    objectives: [
+                        "Mô tả được sự thành lập nhà Trần.",
+                        "Trình bày được những nét chính về tình hình chính trị, kinh tế, xã hội, văn hoá, tôn giáo thời Trần.",
+                        "Nêu được những thành tựu chủ yếu về văn hoá của Đại Việt thời Trần."
+                    ]
+                },
+                "Bài 17. Ba lần kháng chiến chống quân xâm lược Mông-Nguyên": {
+                    chapter: "Chương V: Đại Việt thời Lý - Trần - Hồ (1009 - 1407)",
+                    content: "Vẽ lược đồ diễn biến, phân tích nguyên nhân thắng lợi và ý nghĩa lịch sử của ba lần kháng chiến chống Mông-Nguyên. Đánh giá vai trò của các nhân vật lịch sử tiêu biểu.",
+                    objectives: [
+                        "Vẽ, lập được lược đồ diễn biến chính ba lần kháng chiến của nhà Trần chống quân xâm lược Mông - Nguyên.",
+                        "Phân tích được nguyên nhân thắng lợi, nêu được ý nghĩa lịch sử của ba lần kháng chiến chống quân xâm lược Mông – Nguyên.",
+                        "Đánh giá được vai trò của một số nhân vật lịch sử tiêu biểu thời Trần: Trần Thủ Độ, Trần Quốc Tuấn, Trần Nhân Tông,..."
+                    ]
+                },
+                "Bài 18. Nhà Hồ và cuộc kháng chiến chống quân xâm lược Minh (1400-1407)": {
+                    chapter: "Chương V: Đại Việt thời Lý - Trần - Hồ (1009 - 1407)",
+                    content: "Trình bày về sự thành lập nhà Hồ, nội dung cải cách của Hồ Quý Ly và cuộc kháng chiến chống quân Minh.",
+                    objectives: [
+                        "Trình bày được sự thành lập của nhà Hồ.",
+                        "Nêu được nội dung và tác động của cuộc cải cách do Hồ Quý Ly khởi xướng.",
+                        "Nắm được diễn biến, kết quả, ý nghĩa các cuộc khởi nghĩa của quý tộc Trần."
+                    ]
+                },
+                "Bài 19. Khởi nghĩa Lam Sơn (1418-1427)": {
+                    chapter: "Chương VI: Đại Việt thời Lê Sơ (1428-1527)",
+                    content: "Trình bày những nét chính về cuộc khởi nghĩa Lam Sơn, những khó khăn ban đầu và quá trình phát triển đến thắng lợi.",
+                    objectives: [
+                        "Biết được những nét chính của cuộc khởi nghĩa Lam Sơn.",
+                        "Biết được những khó khăn của nghĩa quân trong những năm đầu của cuộc khởi nghĩa."
+                    ]
+                },
+                "Bài 20. Đại Việt thời Lê Sơ (1428-1527)": {
+                    chapter: "Chương VI: Đại Việt thời Lê Sơ (1428-1527)",
+                    content: "Mô tả sự thành lập nhà Lê Sơ, tình hình kinh tế, và giới thiệu sự phát triển văn hóa, giáo dục cùng các danh nhân tiêu biểu.",
+                    objectives: [
+                        "Mô tả được sự thành lập nhà Lê Sơ.",
+                        "Nhận biết được tình hình kinh tế thời Lê Sơ.",
+                        "Giới thiệu được sự phát triển văn hóa, giáo dục và một số danh nhân văn hóa tiêu biểu thời Lê Sơ."
+                    ]
+                },
+                "Bài 21. Vùng đất phía Nam từ đầu thế kỉ X đến đầu thế kỉ XVI": {
+                    chapter: "Chương VII: Vùng đất phía Nam",
+                    content: "Nêu những diễn biến chính trị và trình bày những nét chính về kinh tế, văn hoá của vùng đất phía Nam trong giai đoạn này.",
+                    objectives: [
+                        "Nêu được những diễn biến cơ bản về chính trị của vùng đất phía Nam từ đầu thế kỉ X đến đầu thế kỉ XVI.",
+                        "Trình bày được những nét chính về kinh tế, văn hoá của vùng đất phía Nam từ đầu thế kỉ X đến đầu thế kỉ XVI."
+                    ]
+                }
+            },
+            "8": {
+                "Bài 1. Các cuộc cách mạng tư sản ở châu Âu và Bắc Mỹ": {
+                    chapter: "Chương I: Lịch sử thế giới cận đại",
+                    content: "Xác định địa điểm, nêu đặc điểm chính và những nét chung về nguyên nhân, kết quả, ý nghĩa của các cuộc cách mạng tư sản tiêu biểu ở Anh, Mỹ, Pháp.",
+                    objectives: [
+                        "Xác định được trên bản đồ thế giới địa điểm diễn ra các cuộc cách mạng tư sản tiêu biểu từ thế kỉ XVI đến thế kỉ XVIII.",
+                        "Nêu được một số đặc điểm chính của các cuộc cách mạng tư sản tiêu biểu ở Anh, Mỹ, Pháp.",
+                        "Trình bày được những nét chung về nguyên nhân, kết quả, ý nghĩa, tính chất của cách mạng tư sản."
+                    ]
+                },
+                "Bài 2. Cách mạng công nghiệp": {
+                    chapter: "Chương I: Lịch sử thế giới cận đại",
+                    content: "Trình bày những thành tựu tiêu biểu và nêu được những tác động quan trọng của cách mạng công nghiệp đối với sản xuất và đời sống.",
+                    objectives: [
+                        "Trình bày được những thành tựu tiêu biểu của cách mạng công nghiệp.",
+                        "Nêu được những tác động quan trọng của cách mạng công nghiệp đối với sản xuất và đời sống."
+                    ]
+                },
+                "Bài 3. Tình hình Đông Nam Á từ nửa sau thế kỉ XVI đến thế kỉ XIX": {
+                    chapter: "Chương II: Các nước Á, Phi, Mĩ La-tinh",
+                    content: "Trình bày quá trình xâm nhập của tư bản phương Tây, tình hình chính trị, kinh tế, văn hoá – xã hội và cuộc đấu tranh chống ách đô hộ của các nước Đông Nam Á.",
+                    objectives: [
+                        "Trình bày được những nét chính trong quá trình xâm nhập của tư bản phương Tây vào các nước Đông Nam Á.",
+                        "Nêu được những nét nổi bật về tình hình chính trị, kinh tế, văn hoá – xã hội của các nước Đông Nam Á dưới ách đô hộ của thực dân phương Tây.",
+                        "Mô tả được những nét chính về cuộc đấu tranh của các nước Đông Nam Á chống lại ách đô hộ của thực dân phương Tây."
+                    ]
+                },
+                "Bài 4. Xung đột Nam – Bắc triều và Trịnh – Nguyễn": {
+                    chapter: "Chương III: Việt Nam từ thế kỉ XVI đến thế kỉ XVIII",
+                    content: "Nêu sự ra đời của Vương triều Mạc, giải thích nguyên nhân và hệ quả của xung đột Nam – Bắc triều và Trịnh – Nguyễn.",
+                    objectives: [
+                        "Nêu được những nét chính về sự ra đời của Vương triều Mạc.",
+                        "Giải thích được nguyên nhân bùng nổ xung đột Nam – Bắc triều, Trịnh – Nguyễn.",
+                        "Nêu được hệ quả của xung đột Nam – Bắc triều, Trịnh – Nguyễn."
+                    ]
+                },
+                "Bài 5. Quá trình khai phá vùng đất phía Nam từ thế kỉ XVI đến thế kỉ XVIII": {
+                    chapter: "Chương III: Việt Nam từ thế kỉ XVI đến thế kỉ XVIII",
+                    content: "Trình bày khái quát quá trình mở cõi của Đại Việt và mô tả, nêu ý nghĩa quá trình thực thi chủ quyền đối với quần đảo Hoàng Sa và Trường Sa của các chúa Nguyễn.",
+                    objectives: [
+                        "Trình bày được khái quát về quá trình mở cõi của Đại Việt trong các thế kỉ XVI – XVIII.",
+                        "Mô tả và nêu được ý nghĩa của quá trình thực thi chủ quyền đối với quần đảo Hoàng Sa và quần đảo Trường Sa của các chúa Nguyễn."
+                    ]
+                },
+                "Bài 6. Kinh tế, văn hoá và tôn giáo ở Đại Việt trong các thế kỉ XVI – XVIII": {
+                    chapter: "Chương III: Việt Nam từ thế kỉ XVI đến thế kỉ XVIII",
+                    content: "Nêu những nét chính về tình hình kinh tế, mô tả và nhận xét sự chuyển biến văn hoá và tôn giáo ở Đại Việt.",
+                    objectives: [
+                        "Nêu được những nét chính về tình hình kinh tế.",
+                        "Mô tả và nhận xét được những nét chính về sự chuyển biến văn hoá và tôn giáo ở Đại Việt trong các thế kỉ XVI – XVIII."
+                    ]
+                },
+                "Bài 7. Khởi nghĩa nông dân ở Đàng Ngoài thế kỉ XVIII": {
+                    chapter: "Chương III: Việt Nam từ thế kỉ XVI đến thế kỉ XVIII",
+                    content: "Nêu bối cảnh, diễn biến, kết quả, ý nghĩa và tác động của phong trào nông dân ở Đàng Ngoài thế kỉ XVIII.",
+                    objectives: [
+                        "Nêu được một số nét chính (bối cảnh lịch sử, diễn biến, kết quả và ý nghĩa) của phong trào nông dân ở Đàng Ngoài thế kỉ XVIII.",
+                        "Nêu được tác động của phong trào nông dân ở Đàng Ngoài đối với xã hội Đại Việt thế kỉ XVIII."
+                    ]
+                },
+                "Bài 8. Phong trào Tây Sơn": {
+                    chapter: "Chương III: Việt Nam từ thế kỉ XVI đến thế kỉ XVIII",
+                    content: "Trình bày nguyên nhân, mô tả các thắng lợi tiêu biểu của phong trào Tây Sơn và đánh giá vai trò của Nguyễn Huệ – Quang Trung.",
+                    objectives: [
+                        "Trình bày được một số nét chính về nguyên nhân bùng nổ và mô tả được một số thắng lợi tiêu biểu của phong trào Tây Sơn.",
+                        "Nêu được nguyên nhân thắng lợi, ý nghĩa lịch sử.",
+                        "Đánh giá được vai trò của Nguyễn Huệ – Quang Trung trong phong trào Tây Sơn."
+                    ]
+                },
+                "Bài 9. Các nước Anh, Pháp, Đức, Mỹ chuyển sang giai đoạn chủ nghĩa đế quốc": {
+                    chapter: "Chương IV: Lịch sử thế giới (cuối thế kỉ XIX - đầu thế kỉ XX)",
+                    content: "Mô tả quá trình hình thành chủ nghĩa đế quốc và nhận biết những chuyển biến về kinh tế, chính sách đối nội, đối ngoại của các đế quốc Anh, Pháp, Đức, Mỹ.",
+                    objectives: [
+                        "Mô tả được những nét chính về quá trình hình thành của chủ nghĩa đế quốc.",
+                        "Nhận biết được những chuyển biến lớn về kinh tế, chính sách đối nội, đối ngoại của các đế quốc Anh, Pháp, Đức, Mỹ từ cuối thế kỉ XIX đến đầu thế kỉ XX."
+                    ]
+                },
+                "Bài 10. Công xã Pa-ri (năm 1871)": {
+                    chapter: "Chương IV: Lịch sử thế giới (cuối thế kỉ XIX - đầu thế kỉ XX)",
+                    content: "Trình bày những nét chính và ý nghĩa lịch sử của Công xã Paris (1871).",
+                    objectives: [
+                        "Trình bày những nét chính về Công xã Paris (1871) và ý nghĩa lịch sử của việc thành lập nhà nước kiểu mới – nhà nước của giai cấp vô sản đầu tiên trên thế giới."
+                    ]
+                },
+                "Bài 11. Phong trào công nhân và sự ra đời của chủ nghĩa Mác": {
+                    chapter: "Chương IV: Lịch sử thế giới (cuối thế kỉ XIX - đầu thế kỉ XX)",
+                    content: "Nêu sự ra đời của giai cấp công nhân, hoạt động của C. Mác, Ph. Ăng-ghen, sự ra đời của chủ nghĩa xã hội khoa học và phong trào công nhân quốc tế.",
+                    objectives: [
+                        "Nêu được sự ra đời của giai cấp công nhân.",
+                        "Trình bày được một số nét hoạt động chính của C. Mac, Ph.Ăng ghẹn và sự ra đời của chủ nghĩa xã hội khoa học.",
+                        "Mô tả được một số hoạt động tiêu biểu của phong trào cộng sản và công nhân quốc tế cuối thế kỉ XIX và đầu XX."
+                    ]
+                },
+                "Bài 12. Chiến tranh thế giới thứ nhất (1914 – 1918)": {
+                    chapter: "Chương IV: Lịch sử thế giới (cuối thế kỉ XIX - đầu thế kỉ XX)",
+                    content: "Nêu nguyên nhân bùng nổ, phân tích hậu quả và tác động của Chiến tranh thế giới thứ nhất đối với lịch sử nhân loại.",
+                    objectives: [
+                        "Nêu được nguyên nhân bùng nổ Chiến tranh thế giới thứ nhất.",
+                        "Phân tích đánh giá được hậu quả và tác động của chiến tranh thế giơi đối với lịch sử nhân loại."
+                    ]
+                },
+                "Bài 13. Cách mạng tháng Mười Nga năm 1917": {
+                    chapter: "Chương IV: Lịch sử thế giới (cuối thế kỉ XIX - đầu thế kỉ XX)",
+                    content: "Nêu nguyên nhân, diễn biến, tác động và ý nghĩa lịch sử của Cách mạng tháng Mười Nga năm 1917.",
+                    objectives: [
+                        "Nêu được một số nét chính (nguyên nhân, diễn biến, tác động và ý nghĩa lịch sử) của Cách mạng tháng Mười Nga năm 1917."
+                    ]
+                },
+                "Bài 14. Sự phát triển của khoa học, kĩ thuật, văn học, nghệ thuật trong các thế kỉ XVIII – XIX": {
+                    chapter: "Chương IV: Lịch sử thế giới (cuối thế kỉ XIX - đầu thế kỉ XX)",
+                    content: "Mô tả một số thành tựu tiêu biểu và phân tích tác động của sự phát triển khoa học, kĩ thuật, văn học, nghệ thuật trong giai đoạn này.",
+                    objectives: [
+                        "Mô tả được một số thành tựu tiêu biểu về khoa học, kĩ thuật, văn học, nghệ thuật trong các thế kỉ XVIII – XIX.",
+                        "Phân tích được tác động của sự phát triển khoa học, kĩ thuật, văn học, nghệ thuật trong các thế kỉ XVIII – XIX."
+                    ]
+                },
+                "Bài 15. Trung Quốc": {
+                    chapter: "Chương V: Các nước châu Á (cuối thế kỉ XIX - đầu thế kỉ XX)",
+                    content: "Mô tả quá trình xâm lược Trung Quốc của các nước đế quốc, trình bày sơ lược về Cách mạng Tân Hợi và ý nghĩa của nó.",
+                    objectives: [
+                        "Mô tả được quá trình xâm lược Trung Quốc của các nước đế quốc.",
+                        "Trình bày được sơ lược về Cách mạng Tân Hợi, nhận biết được nguyên nhân thắng lợi và nêu được ý nghĩa của Cách mạng Tân Hợi."
+                    ]
+                },
+                "Bài 16. Nhật Bản": {
+                    chapter: "Chương V: Các nước châu Á (cuối thế kỉ XIX - đầu thế kỉ XX)",
+                    content: "Nêu nội dung, ý nghĩa của cuộc Duy tân Minh Trị và trình bày những biểu hiện của sự hình thành chủ nghĩa đế quốc ở Nhật Bản.",
+                    objectives: [
+                        "Nêu được những nội dung chính ý nghĩa lịch sử của cuộc Duy tân Minh Trị.",
+                        "Trình bày được những biểu hiện của sự hình thành chủ nghĩa đế quốc ở Nhật Bản vào cuối thế kỉ XIX, đầu thế kỉ XX."
+                    ]
+                },
+                "Bài 17. Ấn Độ": {
+                    chapter: "Chương V: Các nước châu Á (cuối thế kỉ XIX - đầu thế kỉ XX)",
+                    content: "Trình bày được tình hình chính trị, kinh tế, xã hội Ấn Độ nửa sau thế kỉ XIX.",
+                    objectives: [
+                        "Trình bày được tình hình chính trị, kinh tế, xã hội Ấn Độ nửa sau thế kỉ XIX."
+                    ]
+                },
+                "Bài 18. Đông Nam Á": {
+                    chapter: "Chương V: Các nước châu Á (cuối thế kỉ XIX - đầu thế kỉ XX)",
+                    content: "Nêu một số sự kiện về phong trào giải phóng dân tộc ở Đông Nam Á từ nửa sau thế kỉ XIX đến đầu thế kỉ XX.",
+                    objectives: [
+                        "Nêu được một số sự kiện về phong trào giải phóng dân tộc ở Đông Nam Á từ nửa sau thế kỉ XIX đến đầu thế kỉ XX."
+                    ]
+                },
+                "Bài 19. Việt Nam nửa đầu thế kỉ XIX": {
+                    chapter: "Chương VI: Việt Nam từ nửa đầu thế kỉ XIX",
+                    content: "Mô tả sự ra đời của nhà Nguyễn, tình hình chính trị, kinh tế, văn hoá, xã hội và quá trình thực thi chủ quyền đối với quần đảo Hoàng Sa, Trường Sa.",
+                    objectives: [
+                        "Mô tả được sự ra đời của nhà Nguyễn.",
+                        "Trình bày được những nét chính về tình hình chính trị, sự phát triển kinh tế, văn hoá, xã hội của Việt Nam thời nhà Nguyễn.",
+                        "Mô tả được quá trình thực thi chủ quyền đối với quần đảo Hoàng Sa và quần đảo Trường Sa của các vua Nguyễn."
+                    ]
+                },
+                "Bài 20. Cuộc kháng chiến chống thực dân Pháp xâm lược của nhân dân Việt Nam (1858 – 1884)": {
+                    chapter: "Chương VI: Việt Nam từ nửa đầu thế kỉ XIX",
+                    content: "Nêu quá trình thực dân Pháp xâm lược Việt Nam và cuộc kháng chiến của nhân dân Việt Nam trong giai đoạn 1858 – 1884.",
+                    objectives: [
+                        "Nêu được quá trình thực dân Pháp xâm lược Việt Nam và cuộc kháng chiến chống thực dân Pháp xâm lược của nhân dân Việt Nam (1858 – 1884)."
+                    ]
+                },
+                "Bài 21. Phong trào chống Pháp của nhân dân Việt Nam trong những năm cuối thế kỉ XIX": {
+                    chapter: "Chương VI: Việt Nam từ nửa đầu thế kỉ XIX",
+                    content: "Trình bày một số cuộc khởi nghĩa tiêu biểu trong phong trào Cần Vương và khởi nghĩa Yên Thế.",
+                    objectives: [
+                        "Trình bày được một số cuộc khởi nghĩa tiêu biểu trong phong trào Cần Vương và khởi nghĩa Yên Thế."
+                    ]
+                },
+                "Bài 22. Trào lưu cải cách ở Việt Nam nửa cuối thế kỉ XIX": {
+                    chapter: "Chương VI: Việt Nam từ nửa đầu thế kỉ XIX",
+                    content: "Nhận biết nguyên nhân và một số nội dung chính trong các đề nghị cải cách của các quan lại, sĩ phu yêu nước.",
+                    objectives: [
+                        "Nhận biết được nguyên nhân, một số nội dung chính trong các đề nghị cải cách của các quan lại, sĩ phu yêu nước."
+                    ]
+                },
+                "Bài 23. Việt Nam đầu thế kỉ XX": {
+                    chapter: "Chương VI: Việt Nam từ nửa đầu thế kỉ XIX",
+                    content: "Nêu tác động của cuộc khai thác thuộc địa lần thứ nhất của Pháp và giới thiệu hoạt động yêu nước của Phan Bội Châu, Phan Châu Trinh, Nguyễn Tất Thành.",
+                    objectives: [
+                        "Nêu được tác động của cuộc khai thác thuộc địa lần thứ nhất của người Pháp đối với xã hội Việt Nam.",
+                        "Giới thiệu được những nét chính về hoạt động yêu nước của Phan Bội Châu, Phan Châu Trinh, Nguyễn Tất Thành."
+                    ]
+                },
+                "Chủ đề. Bảo vệ chủ quyền, các quyền và lợi ích hợp pháp của Việt Nam ở Biển Đông": {
+                    chapter: "Chủ đề chung",
+                    content: "Xác định vị trí, phạm vi biển đảo Việt Nam, trình bày về môi trường, tài nguyên, quá trình xác lập chủ quyền và vai trò chiến lược của biển đảo.",
+                    objectives: [
+                        "Xác định được vị trí, phạm vi của vùng biển và hải đảo Việt Nam (theo Luật Biển Việt Nam).",
+                        "Trình bày được những nét chính về môi trường, tài nguyên thiên nhiên; phân tích được những thuận lợi và khó khăn đối với phát triển kinh tế và bảo vệ chủ quyền.",
+                        "Trình bày được quá trình xác lập chủ quyền biển đảo của Việt Nam trong lịch sử.",
+                        "Trình bày được những chứng cứ lịch sử, pháp lí về chủ quyền biển đảo Việt Nam.",
+                        "Nêu được vai trò chiến lược của biển đảo Việt Nam trong việc khẳng định và bảo vệ chủ quyền."
+                    ]
+                }
+            },
+            "9": {
+                "Bài 1. Nước Nga và Liên Xô từ năm 1918 đến năm 1945": {
+                    chapter: "Chương 1. Thế giới từ năm 1918 đến năm 1945",
+                    content: "Nêu những nét chính về nước Nga trước khi Liên Xô thành lập, trình bày thành tựu và hạn chế của công cuộc xây dựng chủ nghĩa xã hội ở Liên Xô.",
+                    objectives: [
+                        "Nêu được những nét chính về nước Nga trước khi Liên Xô được thành lập.",
+                        "Trình bày được những thành tựu và chỉ ra được hạn chế của công cuộc xây dựng chủ nghĩa xã hội ở Liên Xô."
+                    ]
+                },
+                "Bài 2. Châu Âu và nước Mỹ từ năm 1918 đến năm 1945": {
+                    chapter: "Chương 1. Thế giới từ năm 1918 đến năm 1945",
+                    content: "Trình bày những nét chính về phong trào cách mạng, sự thành lập Quốc tế Cộng sản và cuộc đại suy thoái kinh tế 1929 – 1933.",
+                    objectives: [
+                        "Trình bày được những nét chính về: phong trào cách mạng và sự thành lập Quốc tế Cộng sản; đại suy thoái kinh tế 1929 – 1933."
+                    ]
+                },
+                "Bài 3. Châu Á từ năm 1918 đến năm 1945": {
+                    chapter: "Chương 1. Thế giới từ năm 1918 đến năm 1945",
+                    content: "Nêu những nét chính về tình hình châu Á từ năm 1918 đến năm 1945.",
+                    objectives: [
+                        "Nêu được những nét chính về tình hình châu Á từ năm 1918 đến năm 1945."
+                    ]
+                },
+                "Bài 4. Chiến tranh thế giới thứ hai (1939 – 1945)": {
+                    chapter: "Chương 1. Thế giới từ năm 1918 đến năm 1945",
+                    content: "Trình bày nguyên nhân, diễn biến, hậu quả, ý nghĩa và vai trò của Liên Xô và các nước Đồng minh trong Chiến tranh thế giới thứ hai.",
+                    objectives: [
+                        "Trình bày được nguyên nhân và diễn biến chủ yếu của Chiến tranh thế giới thứ hai.",
+                        "Phân tích được hậu quả của Chiến tranh thế giới thứ hai đối với lịch sử nhân loại.",
+                        "Nêu được nguyên nhân thắng lợi, ý nghĩa lịch sử, vai trò của Liên Xô và các nước Đồng minh trong chiến thắng chủ nghĩa phát xít."
+                    ]
+                },
+                "Bài 5. Phong trào dân tộc dân chủ những năm 1918 – 1930": {
+                    chapter: "Chương 2. Việt Nam từ năm 1918 đến năm 1945",
+                    content: "Mô tả những nét chính và phân tích nguyên nhân, hệ quả của phong trào dân tộc dân chủ ở Việt Nam trong giai đoạn 1918-1930.",
+                    objectives: [
+                        "Mô tả được những nét chính của phong trào dân tộc dân chủ những năm 1918-1930.",
+                        "Phân tích được nguyên nhân và hệ quả của phong trào dân tộc dân chủ những năm 1918-1930."
+                    ]
+                },
+                "Bài 6. Hoạt động của Nguyễn Ái Quốc và sự thành lập Đảng Cộng sản Việt Nam": {
+                    chapter: "Chương 2. Việt Nam từ năm 1918 đến năm 1945",
+                    content: "Nêu hoạt động của Nguyễn Ái Quốc, quá trình, ý nghĩa thành lập Đảng Cộng sản Việt Nam và vai trò của Người.",
+                    objectives: [
+                        "Nêu được những nét chính về hoạt động của Nguyễn Ái Quốc trong những năm 1918-1930.",
+                        "Nhận biết được quá trình và ý nghĩa của việc thành lập Đảng Cộng sản Việt Nam; đánh giá được vai trò của Nguyễn Ái Quốc trong quá trình thành lập Đảng Cộng sản Việt Nam."
+                    ]
+                },
+                "Bài 7. Phong trào cách mạng Việt Nam thời kì 1930 – 1939": {
+                    chapter: "Chương 2. Việt Nam từ năm 1918 đến năm 1945",
+                    content: "Mô tả những nét chủ yếu của phong trào cách mạng 1930 – 1931 và phong trào dân chủ 1936 - 1939.",
+                    objectives: [
+                        "Mô tả được những nét chủ yếu của phong trào cách mạng 1930 – 1931 (bối cảnh, diễn biến chính, ý nghĩa của phong trào).",
+                        "Mô tả được những nét chủ yếu của phong trào dân chủ 1936 - 1939 (bối cảnh, diễn biến chính, ý nghĩa của phong trào)."
+                    ]
+                },
+                "Bài 8. Cách mạng tháng Tám năm 1945": {
+                    chapter: "Chương 2. Việt Nam từ năm 1918 đến năm 1945",
+                    content: "Nêu tình hình Việt Nam dưới ách thống trị Pháp - Nhật, sự chuẩn bị khởi nghĩa, diễn biến, nguyên nhân thắng lợi và ý nghĩa lịch sử của Cách mạng tháng Tám.",
+                    objectives: [
+                        "Nêu được tình hình Việt Nam dưới ách thống trị của Pháp Nhật Bản.",
+                        "Nhận biết được sự chuẩn bị của nhân dân Việt Nam tiến tới khởi nghĩa giành chính quyền.",
+                        "Trình bày được diễn biến chính của Cách mạng tháng Tám năm 1945 và sự ra đời của nước Việt Nam Dân chủ Cộng hoà.",
+                        "Nêu được nguyên nhân thắng lợi, ý nghĩa lịch sử của Cách mạng tháng Tám năm 1945."
+                    ]
+                },
+                "Bài 9. Chiến tranh lạnh (1947 – 1989)": {
+                    chapter: "Chương 3. Thế giới từ năm 1945 đến năm 1991",
+                    content: "Nhận biết nguyên nhân, những biểu hiện và hậu quả của chiến tranh lạnh.",
+                    objectives: [
+                        "Nhận biết được nguyên nhân, những biểu hiện và hậu quả của chiến tranh lạnh."
+                    ]
+                },
+                "Bài 10. Liên Xô và các nước Đông Âu từ năm 1945 đến năm 1991": {
+                    chapter: "Chương 3. Thế giới từ năm 1945 đến năm 1991",
+                    content: "Trình bày tình hình chính trị, kinh tế, xã hội, văn hoá của Liên Xô và Đông Âu, và giải thích sự sụp đổ của chế độ xã hội chủ nghĩa.",
+                    objectives: [
+                        "Trình bày được tình hình chính trị, kinh tế, xã hội, văn hoá của Liên Xô và Đông Âu từ năm 1945 đến năm 1991.",
+                        "Giải thích được sự sụp đổ của chế độ xã hội chủ nghĩa ở Liên Xô và Đông Âu."
+                    ]
+                },
+                "Bài 11. Nước Mỹ và các nước Tây Âu từ năm 1945 đến năm 1991": {
+                    chapter: "Chương 3. Thế giới từ năm 1945 đến năm 1991",
+                    content: "Nêu những nét chính về tình hình chính trị, kinh tế của nước Mỹ và các nước Tây Âu, và tìm hiểu về quá trình thành lập EU.",
+                    objectives: [
+                        "Nêu được những nét chính về tình hình chính trị, kinh tế của nước Mỹ và các nước Tây Âu từ năm 1945 đến năm 1991.",
+                        "Vận dụng kiến thức về quá trình thành lập tổ chức Liên minh châu Âu (EU) để tìm hiểu những thông tin liên quan đến quá trình Anh rời khỏi tổ chức này vào năm 2020."
+                    ]
+                },
+                "Bài 12. Mỹ La-tinh từ năm 1945 đến năm 1991": {
+                    chapter: "Chương 3. Thế giới từ năm 1945 đến năm 1991",
+                    content: "Mô tả đôi nét về các nước Mỹ La-tinh, trình bày khái quát về cách mạng Cu-ba và công cuộc xây dựng chủ nghĩa xã hội ở Cu-ba.",
+                    objectives: [
+                        "Mô tả được đôi nét về các nước Mỹ La-tinh từ năm 1945 đến năm 1991.",
+                        "Trình bày được một cách khái quát về cách mạng Cu-ba và đánh giá được kết quả công cuộc xây dựng chủ nghĩa xã hội ở Cu-ba."
+                    ]
+                },
+                "Bài 13. Một số nước ở châu Á từ năm 1945 đến năm 1991": {
+                    chapter: "Chương 3. Thế giới từ năm 1945 đến năm 1991",
+                    content: "Giới thiệu những nét chính về Nhật Bản, Trung Quốc, Ấn Độ từ năm 1945 đến năm 1991.",
+                    objectives: [
+                        "Giới thiệu được những nét chính về Nhật Bản, Trung Quốc, Ấn Độ từ năm 1945 đến năm 1991."
+                    ]
+                },
+                "Bài 14. Xây dựng và bảo vệ chính quyền nước Việt Nam Dân chủ Cộng hoà (9/1945 – 12/1946)": {
+                    chapter: "Chương 4. Việt Nam từ năm 1945 – 1991",
+                    content: "Nhận biết các biện pháp xây dựng và củng cố chính quyền, giải quyết khó khăn và trình bày cuộc kháng chiến chống Pháp ở Nam Bộ.",
+                    objectives: [
+                        "Nhận biết được những biện pháp chủ yếu để xây dựng và củng cố chính quyền cách mạng, giải quyết những khó khăn về kinh tế, văn hoá, giáo dục, quân sự,... trong năm đầu sau Cách mạng tháng Tám năm 1945.",
+                        "Trình bày được những nét chính về cuộc kháng chiến chống thực dân Pháp xâm lược của nhân dân Nam Bộ."
+                    ]
+                },
+                "Bài 15. Những năm đầu Việt Nam kháng chiến chống thực dân Pháp xâm lược (1946 – 1950)": {
+                    chapter: "Chương 4. Việt Nam từ năm 1945 – 1991",
+                    content: "Giải thích nguyên nhân bùng nổ kháng chiến toàn quốc, đường lối kháng chiến của Đảng và mô tả những thắng lợi quân sự tiêu biểu.",
+                    objectives: [
+                        "Giải thích được nguyên nhân bùng nổ cuộc kháng chiến toàn quốc chống thực dân Pháp xâm lược (1946).",
+                        "Nhận biết và giải thích được đường lối kháng chiến chống thực dân Pháp xâm lược của Đảng.",
+                        "Mô tả được những thắng lợi tiêu biểu của Việt Nam trên mặt trận quân sự trong những năm đầu của cuộc kháng chiến."
+                    ]
+                },
+                "Bài 16. Cuộc kháng chiến chống thực dân Pháp kết thúc thắng lợi (1951 – 1954)": {
+                    chapter: "Chương 4. Việt Nam từ năm 1945 – 1991",
+                    content: "Mô tả những thắng lợi trên các mặt trận quân sự, kinh tế, văn hoá, ngoại giao và nêu ý nghĩa, nguyên nhân thắng lợi của cuộc kháng chiến.",
+                    objectives: [
+                        "Mô tả được những thắng lợi tiêu biểu của Việt Nam trên các mặt trận quân sự, kinh tế, văn hoá, ngoại giao trong giai đoạn 1951-1954.",
+                        "Nêu được ý nghĩa lịch sử, nguyên nhân thắng lợi của cuộc kháng chiến chống thực dân Pháp (1945 – 1954)."
+                    ]
+                },
+                "Bài 17. Việt Nam từ năm 1954 đến năm 1965": {
+                    chapter: "Chương 4. Việt Nam từ năm 1945 – 1991",
+                    content: "Giới thiệu thành tựu xây dựng miền Bắc xã hội chủ nghĩa và mô tả các thắng lợi quân sự của nhân dân miền Nam (phong trào Đồng khởi, đánh bại 'Chiến tranh đặc biệt').",
+                    objectives: [
+                        "Giới thiệu được những thành tựu tiêu biểu trong công cuộc xây dựng miền Bắc xã hội chủ nghĩa.",
+                        "Mô tả được các thắng lợi tiêu biểu về quân sự của nhân dân miền Nam trong kháng chiến chống Mỹ, cứu nước giai đoạn 1954 - 1965."
+                    ]
+                },
+                "Bài 18. Việt Nam từ năm 1965 đến năm 1975": {
+                    chapter: "Chương 4. Việt Nam từ năm 1945 – 1991",
+                    content: "Mô tả các thắng lợi quân sự ở miền Nam (đánh bại 'Chiến tranh cục bộ', 'Việt Nam hoá chiến tranh', Tổng tiến công 1968, 1972, Chiến dịch Hồ Chí Minh 1975), thành tựu xây dựng miền Bắc và ý nghĩa cuộc kháng chiến.",
+                    objectives: [
+                        "Mô tả được các thắng lợi tiêu biểu về quân sự của nhân dân miền Nam trong kháng chiến chống Mỹ, cứu nước giai đoạn 1965 - 1975.",
+                        "Giới thiệu được những thành tựu tiêu biểu trong công cuộc xây dựng miền Bắc xã hội chủ nghĩa.",
+                        "Nêu được nguyên nhân thắng lợi và ý nghĩa lịch sử của cuộc kháng chiến chống Mỹ, cứu nước."
+                    ]
+                },
+                "Bài 19. Việt Nam từ năm 1976 đến năm 1991": {
+                    chapter: "Chương 4. Việt Nam từ năm 1945 – 1991",
+                    content: "Trình bày sự thống nhất đất nước, cuộc đấu tranh bảo vệ Tổ quốc, tình hình chính trị, kinh tế, xã hội và đường lối Đổi mới của Đảng.",
+                    objectives: [
+                        "Trình bày được sự thống nhất đất nước về mặt nhà nước, cuộc đấu tranh bảo vệ Tổ quốc ở vùng biên giới.",
+                        "Nêu được tình hình chính trị, kinh tế, xã hội Việt Nam trong những năm 1976-1985.",
+                        "Mô tả được đường lối Đổi mới của Đảng và Nhà nước ta, giải thích được nguyên nhân, nêu được kết quả và ý nghĩa của công cuộc Đổi mới trong giai đoạn 1986 - 1991."
+                    ]
+                },
+                "Bài 20. Trật tự thế giới mới từ năm 1991 đến nay": {
+                    chapter: "Chương 5. Thế giới từ năm 1991 đến nay",
+                    content: "Nhận biết xu hướng và sự hình thành trật tự thế giới mới sau Chiến tranh lạnh và vận dụng để nhận thức về đường lối ngoại giao của Việt Nam.",
+                    objectives: [
+                        "Nhận biết được xu hướng và sự hình thành trật tự thế giới mới sau Chiến tranh lạnh.",
+                        "Vận dụng kiến thức về xu hướng và sự hình thành trật tự thế giới mới sau Chiến tranh lạnh để nhận thức về đường lối ngoại giao của Việt Nam hiện đại."
+                    ]
+                },
+                "Bài 21. Liên bang Nga và nước Mỹ từ năm 1991 đến nay": {
+                    chapter: "Chương 5. Thế giới từ năm 1991 đến nay",
+                    content: "Nêu được tình hình chính trị, kinh tế của Liên bang Nga và nước Mỹ từ năm 1991 đến nay.",
+                    objectives: [
+                        "Nêu được tình hình chính trị, kinh tế của Liên bang Nga và nước Mỹ từ năm 1991 đến nay."
+                    ]
+                },
+                "Bài 22. Châu Á từ năm 1991 đến nay": {
+                    chapter: "Chương 5. Thế giới từ năm 1991 đến nay",
+                    content: "Giới thiệu sự phát triển kinh tế - xã hội của Trung Quốc, Nhật Bản, Hàn Quốc và quá trình phát triển của ASEAN.",
+                    objectives: [
+                        "Giới thiệu được sự phát triển kinh tế - xã hội của các nước Đông Bắc Á (Trung Quốc, Nhật Bản, Hàn Quốc) từ năm 1991 đến nay.",
+                        "Mô tả được quá trình phát triển của ASEAN từ năm 1991 đến nay và những nét chính của Cộng đồng ASEAN."
+                    ]
+                },
+                "Bài 23. Công cuộc Đổi mới từ năm 1991 đến nay": {
+                    chapter: "Chương 6. Việt Nam từ năm 1991 đến nay",
+                    content: "Giới thiệu những thành tựu tiêu biểu và đánh giá thành tựu, hạn chế của công cuộc Đổi mới ở Việt Nam từ năm 1991.",
+                    objectives: [
+                        "Giới thiệu được nét chính về những thành tựu tiêu biểu của công cuộc Đổi mới đất nước từ năm 1991 đến nay.",
+                        "Đánh giá được thành tựu và hạn chế trong việc thực hiện đường lối Đổi mới ở Việt Nam từ năm 1991 đến nay."
+                    ]
+                },
+                "Bài 24. Cách mạng khoa học, kĩ thuật và xu thế toàn cầu hoá": {
+                    chapter: "Chương 7. Cách mạng khoa học, kĩ thuật và xu thế toàn cầu hoá",
+                    content: "Mô tả những thành tựu chủ yếu của cách mạng khoa học, kĩ thuật, trình bày nét cơ bản và tác động của xu hướng toàn cầu hoá.",
+                    objectives: [
+                        "Mô tả được những thành tựu chủ yếu của cách mạng khoa học, kĩ thuật trên thế giới và ảnh hưởng của cuộc cách mạng đó đến Việt Nam.",
+                        "Trình bày được những nét cơ bản về xu hướng toàn cầu hoá và đánh giá được tác động của toàn cầu hoá đối với thế giới và Việt Nam."
+                    ]
+                },
+                "Chủ đề. Bảo vệ chủ quyền, các quyền và lợi ích hợp pháp của Việt Nam ở Biển Đông": {
+                    chapter: "Chủ đề chung",
+                    content: "Trình bày những chứng cứ lịch sử, pháp lí và nêu vai trò chiến lược của biển đảo Việt Nam trong việc khẳng định và bảo vệ chủ quyền.",
+                    objectives: [
+                        "Trình bày được những chứng cứ lịch sử, pháp lí về chủ quyền biển đảo Việt Nam.",
+                        "Nêu được vai trò chiến lược của biển đảo Việt Nam trong việc khẳng định và bảo vệ chủ quyền, các quyền và lợi ích hợp pháp của Việt Nam ở Biển Đông."
+                    ]
+                },
+                "Chủ đề. Văn minh châu thổ sông Hồng và sông Cửu Long": {
+                    chapter: "Chủ đề chung",
+                    content: "Trình bày nét đặc sắc văn hoá, phân tích biểu hiện và tác động của biến đổi khí hậu ở hai vùng châu thổ, và đề xuất biện pháp ứng phó.",
+                    objectives: [
+                        "Trình bày được những nét đặc sắc về văn hoá ở châu thổ sông Hồng và sông Cửu Long.",
+                        "Phân tích được những biểu hiện của biến đổi khí hậu ở hai vùng châu thổ sông Hồng và sông Cửu Long.",
+                        "Nêu được tác động của biến đổi khí hậu đối với sự phát triển kinh tế - xã hội.",
+                        "Đề xuất được ở mức độ đơn giản một số biện pháp ứng phó với biến đổi khí hậu."
+                    ]
+                }
+            }
+        };
+
+        // --- Global State ---
+        let examStructure = [];
+
+        // --- DOM Elements ---
+        const gradeSelect = document.getElementById('gradeSelect');
+        const lessonSelect = document.getElementById('lessonSelect');
+        const objectivesContainer = document.getElementById('objectivesContainer');
+        const objectivesSelect = document.getElementById('objectivesSelect');
+        const addBtn = document.getElementById('addBtn');
+        const structureContainer = document.getElementById('structureContainer');
+        const structureList = document.getElementById('structureList');
+        const generateFinalExamBtn = document.getElementById('generateFinalExamBtn');
+        const generateText = document.getElementById('generateText');
+        const generateSpinner = document.getElementById('generateSpinner');
+        const resultSection = document.getElementById('resultSection');
+        const examContent = document.getElementById('examContent');
+        const examMatrixContent = document.getElementById('examMatrixContent');
+        const examSpecContent = document.getElementById('examSpecContent');
+        const copyBtn = document.getElementById('copyBtn');
+        const exportWordBtn = document.getElementById('exportWordBtn');
+        const newExamBtn = document.getElementById('newExamBtn');
+        const messageBox = document.getElementById('messageBox');
+        const useTextbook = document.getElementById('useTextbook');
+        const webLinks = document.getElementById('webLinks');
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            // No Google API init needed for Word/Excel export via Blob
+        };
+
+
+        // --- Event Listeners ---
+        gradeSelect.addEventListener('change', () => {
+            const selectedGrade = gradeSelect.value;
+            const lessons = examData[selectedGrade] || {};
+            lessonSelect.innerHTML = '<option selected disabled>-- Chọn bài học --</option>';
+            objectivesContainer.style.display = 'none';
+            for (const lessonName in lessons) {
+                const option = document.createElement('option');
+                option.value = lessonName;
+                option.textContent = lessonName;
+                lessonSelect.appendChild(option);
+            }
+            lessonSelect.disabled = false;
+        });
+
+        lessonSelect.addEventListener('change', () => {
+            const selectedGrade = gradeSelect.value;
+            const selectedLesson = lessonSelect.value;
+            const lessonInfo = examData[selectedGrade]?.[selectedLesson];
+
+            if (lessonInfo && lessonInfo.objectives) {
+                objectivesSelect.innerHTML = '';
+                lessonInfo.objectives.forEach(obj => {
+                    const option = document.createElement('option');
+                    option.value = obj;
+                    option.textContent = obj;
+                    objectivesSelect.appendChild(option);
+                });
+                objectivesContainer.style.display = 'block';
+            } else {
+                 objectivesContainer.style.display = 'none';
+            }
+        });
+
+        addBtn.addEventListener('click', () => {
+            const grade = gradeSelect.value;
+            const lesson = lessonSelect.value;
+            const numQuestions = document.getElementById('questionNum').value;
+            const difficulty = document.getElementById('difficultySelect').value;
+            const type = document.getElementById('typeSelect').value;
+            const selectedObjectives = Array.from(objectivesSelect.selectedOptions).map(opt => opt.value);
+
+            if (!grade || grade === '-- Chọn lớp --' || !lesson || lesson === '-- Chọn bài học --') {
+                showAlert('Vui lòng chọn đầy đủ Lớp và Bài học.', 'warning');
+                return;
+            }
+
+            const selection = {
+                id: Date.now(),
+                grade,
+                lesson,
+                numQuestions,
+                difficulty,
+                type,
+                objectives: selectedObjectives.length > 0 ? selectedObjectives : ['Toàn bộ bài học']
+            };
+
+            examStructure.push(selection);
+            renderStructure();
+            showAlert(`Đã thêm phần "${lesson}" vào cấu trúc đề thi.`, 'success');
+        });
+
+        generateFinalExamBtn.addEventListener('click', async () => {
+            if (examStructure.length === 0) {
+                showAlert('Cấu trúc đề thi đang trống. Vui lòng thêm ít nhất một phần.', 'danger');
+                return;
+            }
+
+            generateText.textContent = 'Đang tạo...';
+            generateSpinner.style.display = 'inline-block';
+            generateFinalExamBtn.disabled = true;
+
+            try {
+                const fullResponse = await generateFullResponse();
+                displayExamResult(fullResponse);
+                resultSection.style.display = 'block';
+                setTimeout(() => resultSection.scrollIntoView({ behavior: 'smooth' }), 100);
+                showAlert('Đã tạo thành công Đề thi, Ma trận và Bản đặc tả!', 'success');
+            } catch (error) {
+                showAlert(`Lỗi tạo đề thi: ${error.message}`, 'danger');
+            } finally {
+                generateText.textContent = 'Tạo đề thi, Ma trận & Đặc tả';
+                generateSpinner.style.display = 'none';
+                generateFinalExamBtn.disabled = false;
+            }
+        });
+        
+        async function generateFullResponse() {
+            let knowledgeSourcePrompt = "";
+            if (useTextbook.checked) {
+                knowledgeSourcePrompt += "1. Dữ liệu chi tiết từ Sách giáo khoa (được cung cấp trong từng phần dưới đây).\n";
+            }
+            if (webLinks.value.trim() !== "") {
+                knowledgeSourcePrompt += `2. Thông tin từ các trang web sau: ${webLinks.value.trim()}\n`;
+            }
+            if (knowledgeSourcePrompt === "") {
+                throw new Error('Vui lòng chọn ít nhất một nguồn kiến thức.');
+            }
+
+            let structuredPrompt = examStructure.map((part, index) => {
+                const lessonInfo = examData[part.grade][part.lesson];
+                let contentForPrompt = useTextbook.checked ? lessonInfo.content : "Không sử dụng sách giáo khoa.";
+                return `
+PHẦN ${index + 1}:
+- Bài học: "${part.lesson}".
+- Chủ đề/Chương: "${lessonInfo.chapter}"
+- Nội dung cốt lõi từ SGK: ${contentForPrompt}
+- Yêu cầu cần đạt trọng tâm: ${part.objectives.join(', ')}.
+- Tạo ra ${part.numQuestions} câu hỏi loại "${part.type}" ở mức độ "${part.difficulty}".`;
+            }).join('\n');
+
+            const finalPrompt = `Bạn là một trợ lý giáo dục AI chuyên nghiệp. Hãy tạo ra một bộ sản phẩm hoàn chỉnh gồm 3 phần: Đề thi, Ma trận, và Bản đặc tả.
+---
+NGUỒN KIẾN THỨC VÀ CẤU TRÚC ĐỀ THI:
+${structuredPrompt}
+---
+YÊU CẦU ĐẦU RA:
+Hãy trả về một chuỗi văn bản duy nhất chứa cả 3 phần, được ngăn cách bởi các dấu hiệu đặc biệt.
+
+1.  **PHẦN ĐỀ THI:**
+    - Bắt đầu bằng '---EXAM_START---'.
+    - Tạo đề thi dựa trên cấu trúc đã cho.
+    - Khi đánh số câu hỏi, sử dụng định dạng 'Câu [số] ([Mức độ]):', ví dụ: 'Câu 1 (NB):'. KHÔNG SỬ DỤNG IN ĐẬM (MARKDOWN **).
+    - Với câu hỏi "trắc nghiệm", hãy cung cấp 4 lựa chọn theo đúng thứ tự A, B, C, D.
+    - Với câu hỏi "đúng/sai", hãy cung cấp một đoạn tư liệu ngắn và các nhận định (a, b, c, d) để thí sinh chọn đúng hoặc sai.
+    - Sau khi tạo xong toàn bộ câu hỏi, hãy thêm một dấu phân cách là '---ANSWER_KEY_START---', sau đó cung cấp đáp án chi tiết cho tất cả các câu hỏi.
+    - Kết thúc bằng '---EXAM_END---'.
+
+2.  **PHẦN MA TRẬN:**
+    - Bắt đầu bằng '---MATRIX_START---'.
+    - Tạo 'I. MA TRẬN ĐỀ KIỂM TRA' dạng bảng văn bản. Bảng cần có các cột: TT, Chương/chủ đề, Nội dung/đơn vị kiến thức, Mức độ đánh giá (Nhận biết, Thông hiểu, Vận dụng...) cho từng loại câu hỏi (TNKQ, Đúng/Sai, Tự luận), và Tổng số câu.
+    - Phân tích cấu trúc đề đã cho để điền thông tin chính xác vào ma trận.
+    - Kết thúc bằng '---MATRIX_END---'.
+
+3.  **PHẦN BẢN ĐẶC TẢ:**
+    - Bắt đầu bằng '---SPEC_START---'.
+    - Tạo 'II. BẢN ĐẶC TẢ ĐỀ KIỂM TRA' dạng bảng văn bản. Bảng cần có các cột: TT, Chương/chủ đề, Nội dung/đơn vị kiến thức, Yêu cầu cần đạt (tách rõ theo các mức độ), và Số lượng câu hỏi tương ứng.
+    - Kết thúc bằng '---SPEC_END---'.
+
+Vui lòng tuân thủ nghiêm ngặt định dạng và các dấu phân cách.`;
+
+            let chatHistory = [{ role: "user", parts: [{ text: finalPrompt }] }];
+            const payload = { contents: chatHistory };
+            const apiKey = "AIzaSyBHKPCVY2gPb7BicWq8DrCyBhSrGsl8-fQ"; // Canvas will provide the API key
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) {
+                 const errorData = await response.json();
+                 throw new Error(`Lỗi từ Gemini API: ${errorData.error?.message || 'Không xác định'}`);
+            }
+            
+            const result = await response.json();
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                return result.candidates[0].content.parts[0].text;
+            } else {
+                // Handle cases where the response structure is unexpected or content is missing
+                console.error("Unexpected API response structure:", result);
+                if (result.promptFeedback && result.promptFeedback.blockReason) {
+                    return `Không thể tạo kết quả do bị chặn. Lý do: ${result.promptFeedback.blockReason}. Chi tiết: ${result.promptFeedback.blockReasonMessage || 'Không có'}`;
+                }
+                return `Không thể tạo kết quả. Vui lòng thử lại.`;
+            }
+        }
+
+
+        newExamBtn.addEventListener('click', () => {
+            examStructure = [];
+            renderStructure();
+            resultSection.style.display = 'none';
+            gradeSelect.selectedIndex = 0;
+            lessonSelect.innerHTML = '<option selected disabled>-- Chọn lớp trước --</option>';
+            lessonSelect.disabled = true;
+            objectivesContainer.style.display = 'none';
+            webLinks.value = '';
+            useTextbook.checked = true;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            messageBox.innerHTML = '';
+        });
+
+        copyBtn.addEventListener('click', () => {
+            const activePane = document.querySelector('.tab-pane.active pre, .tab-pane.active .rendered-table');
+            if (activePane) {
+                const textToCopy = activePane.innerText;
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = textToCopy;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                try {
+                    document.execCommand('copy');
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="bi bi-check2"></i> Đã sao chép';
+                    setTimeout(() => { copyBtn.innerHTML = originalText; }, 2000);
+                } catch (err) {
+                    showAlert('Không thể sao chép.', 'warning');
+                } finally {
+                    document.body.removeChild(tempTextArea);
+                }
+            }
+        });
+
+        exportWordBtn.addEventListener('click', () => {
+            try {
+                const examFullText = examContent.innerText;
+                const matrixHtml = examMatrixContent.innerHTML;
+                const specHtml = examSpecContent.innerHTML;
+
+                const [questions, answers] = examFullText.split('---ANSWER_KEY_START---');
+                
+                const answerHtml = answers ? `<h2>ĐÁP ÁN</h2><div style="white-space: pre-wrap; font-family: Times New Roman, serif;">${answers.trim().replace(/\n/g, '<br>')}</div>` : '';
+                const examHtml = `<h2>ĐỀ THI</h2><div style="white-space: pre-wrap; font-family: Times New Roman, serif;">${questions.trim()}</div>`;
+                
+                const fullHtml = `
+                    <!DOCTYPE html>
+                    <html lang="vi">
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>Đề thi, Ma trận và Đặc tả</title>
+                        <style>
+                            body { font-family: 'Times New Roman', serif; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-family: 'Times New Roman', serif; }
+                            th, td { border: 1px solid black; padding: 8px; text-align: center; vertical-align: middle; }
+                            th { background-color: #f2f2f2; }
+                            .text-left { text-align: left; }
+                        </style>
+                    </head>
+                    <body>
+                        ${examHtml}
+                        <br style="page-break-after: always">
+                        ${answerHtml}
+                        <br style="page-break-after: always">
+                        ${matrixHtml}
+                        <br style="page-break-after: always">
+                        ${specHtml}
+                    </body>
+                    </html>
+                `;
+
+                const blob = new Blob(['\ufeff', fullHtml], {
+                    type: 'application/msword'
+                });
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "de_thi_va_ma_tran.doc";
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 0);
+                showAlert('File Word đã được tạo!', 'success');
+            } catch (e) {
+                showAlert('Không thể xuất file Word. Lỗi: ' + e.message, 'danger');
+            }
+        });
+
+        // --- Helper Functions ---
+        function renderStructure() {
+            if (examStructure.length === 0) {
+                structureContainer.style.display = 'none';
+                return;
+            }
+            structureContainer.style.display = 'block';
+            structureList.innerHTML = '';
+
+            examStructure.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'structure-item';
+                itemDiv.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">Phần ${index + 1}: ${item.lesson}</h6>
+                            <p><strong>Số câu:</strong> ${item.numQuestions} | <strong>Loại:</strong> ${item.type} | <strong>Mức độ:</strong> ${item.difficulty}</p>
+                            <p class="text-muted small"><strong>Yêu cầu:</strong> ${item.objectives.join(', ')}</p>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeItem(${item.id})"><i class="bi bi-trash"></i></button>
+                    </div>
+                `;
+                structureList.appendChild(itemDiv);
+            });
+        }
+
+        window.removeItem = function(id) {
+            examStructure = examStructure.filter(item => item.id !== id);
+            renderStructure();
+            showAlert('Đã xóa một phần khỏi cấu trúc đề thi.', 'info');
+        }
+        
+        function displayExamResult(fullResponse) {
+            const examWithAnswer = fullResponse.split('---EXAM_START---')[1]?.split('---EXAM_END---')[0] || "Không thể tạo đề thi.";
+            
+            examContent.textContent = examWithAnswer.trim(); // Store full text for Word export
+            
+            // Render tables from client-side logic
+            renderMatrixTable();
+            renderSpecTable();
+        }
+
+        function renderMatrixTable() {
+            const container = document.getElementById('examMatrixContent');
+            const tableHtml = `
+                <h2>I. MA TRẬN ĐỀ KIỂM TRA</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th rowspan="3">TT</th>
+                            <th rowspan="3">Chương/chủ đề</th>
+                            <th rowspan="3">Nội dung/đơn vị kiến thức</th>
+                            <th colspan="12">Năng lực và mức độ đánh giá</th>
+                            <th rowspan="3">Tổng</th>
+                            <th rowspan="3">Tỉ lệ % điểm</th>
+                        </tr>
+                        <tr>
+                            <th colspan="3">TNKQ nhiều lựa chọn</th>
+                            <th colspan="3">TNKQ đúng sai</th>
+                            <th colspan="3">Tự luận</th>
+                            <th colspan="3">Tổng</th>
+                        </tr>
+                        <tr>
+                            <th>Biết</th><th>Hiểu</th><th>VD</th>
+                            <th>Biết</th><th>Hiểu</th><th>VD</th>
+                            <th>Biết</th><th>Hiểu</th><th>VD</th>
+                            <th>Biết</th><th>Hiểu</th><th>VD</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>`;
+            container.innerHTML = tableHtml;
+            const tbody = container.querySelector('tbody');
+            
+            // Group by chapter
+            const chapters = {};
+            examStructure.forEach(item => {
+                const chapterName = examData[item.grade][item.lesson].chapter;
+                if (!chapters[chapterName]) {
+                    chapters[chapterName] = [];
+                }
+                chapters[chapterName].push(item);
+            });
+
+            let tt = 1;
+            for (const chapterName in chapters) {
+                const lessonsInChapter = chapters[chapterName];
+                lessonsInChapter.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    let rowHtml = '';
+                    if (index === 0) {
+                        rowHtml += `<td rowspan=${lessonsInChapter.length}>${tt++}</td>`;
+                        rowHtml += `<td rowspan=${lessonsInChapter.length}>${chapterName}</td>`;
+                    }
+                    rowHtml += `<td>${item.lesson}</td>`;
+                    
+                    const levels = ['nhận biết', 'thông hiểu', 'vận dụng'];
+                    const types = ['trắc nghiệm', 'đúng/sai', 'tự luận'];
+                    let totalByLevel = { 'nhận biết': 0, 'thông hiểu': 0, 'vận dụng': 0, 'vận dụng cao': 0 };
+
+                    types.forEach(type => {
+                        levels.forEach(level => {
+                            if (item.type === type && item.difficulty === level) {
+                                rowHtml += `<td>${item.numQuestions}</td>`;
+                                totalByLevel[level] += parseInt(item.numQuestions);
+                            } else {
+                                rowHtml += `<td></td>`;
+                            }
+                        });
+                    });
+                    
+                    levels.forEach(level => {
+                         rowHtml += `<td>${totalByLevel[level] || ''}</td>`;
+                    });
+
+                    rowHtml += `<td>${item.numQuestions}</td><td></td>`; // Total and Percentage
+                    tr.innerHTML = rowHtml;
+                    tbody.appendChild(tr);
+                });
+            }
+            // Add summary rows if needed
+        }
+        function renderSpecTable() {
+            const container = document.getElementById('examSpecContent');
+            const tableHtml = `
+                 <h2>II. BẢN ĐẶC TẢ ĐỀ KIỂM TRA</h2>
+                 <table>
+                    <thead>
+                        <tr>
+                            <th rowspan="2">TT</th>
+                            <th rowspan="2">Chương/chủ đề</th>
+                            <th rowspan="2">Nội dung/đơn vị kiến thức</th>
+                            <th rowspan="2">Yêu cầu cần đạt</th>
+                            <th colspan="3">Số lượng câu hỏi ở các mức độ</th>
+                        </tr>
+                        <tr>
+                            <th>TNKQ nhiều lựa chọn</th>
+                            <th>TNKQ Đúng-Sai</th>
+                            <th>Tự luận</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>`;
+            container.innerHTML = tableHtml;
+            const tbody = container.querySelector('tbody');
+
+            // Group by chapter
+            const chapters = {};
+            examStructure.forEach(item => {
+                const chapterName = examData[item.grade][item.lesson].chapter;
+                if (!chapters[chapterName]) {
+                    chapters[chapterName] = [];
+                }
+                chapters[chapterName].push(item);
+            });
+
+            let tt = 1;
+            for (const chapterName in chapters) {
+                const lessonsInChapter = chapters[chapterName];
+                lessonsInChapter.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    let rowHtml = '';
+                     if (index === 0) {
+                        rowHtml += `<td rowspan=${lessonsInChapter.length}>${tt++}</td>`;
+                        rowHtml += `<td class="text-left" rowspan=${lessonsInChapter.length}>${chapterName}</td>`;
+                    }
+                    rowHtml += `<td class="text-left">${item.lesson}</td>`;
+                    rowHtml += `<td class="text-left">${item.objectives.map(o => `- ${o}`).join('<br>')}</td>`;
+                    rowHtml += `<td>${item.difficulty === 'nhận biết' ? `${item.numQuestions} (${item.type})` : ''}</td>`;
+                    rowHtml += `<td>${item.difficulty === 'thông hiểu' ? `${item.numQuestions} (${item.type})` : ''}</td>`;
+                    rowHtml += `<td>${item.difficulty === 'vận dụng' ? `${item.numQuestions} (${item.type})` : ''}</td>`;
+                    tr.innerHTML = rowHtml;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+        
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            messageBox.prepend(alertDiv);
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alertDiv);
+                if (alertDiv.parentElement) bsAlert.close();
+            }, 7000);
+        }
+    </script>
+</body>
+</html>
